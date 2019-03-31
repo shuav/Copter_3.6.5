@@ -367,7 +367,7 @@ void AP_Baro_MS56XX::update()
     if (d2count != 0) {
         _D2 = ((float)sD2) / d2count;
     }
-    hal.console->printf("_ms56xx_type=%d\r\n",_ms56xx_type);
+//    hal.console->printf("_ms56xx_type=%d\r\n",_ms56xx_type);
     switch (_ms56xx_type)
     {
     case BARO_MS5607:
@@ -427,8 +427,8 @@ void AP_Baro_MS56XX::_calculate_5611()
     float temperature = (TEMP + 2000) * 0.01f;
 //	hal.console->printf("****ms5611\r\n");
 //	hal.console->printf("_instance=%d\r\n",_instance);
-	hal.console->printf("-------\r\n");
-	hal.console->printf("pressure=%d\r\n",pressure);
+//	hal.console->printf("-------\r\n");
+//	hal.console->printf("pressure=%d\r\n",pressure);
     _copy_to_frontend(_instance, pressure, temperature);
 }
 

@@ -915,23 +915,23 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_COMMAND_LONG:       // MAV ID: 76
     {
-    	 hal.console->printf("#########\r\n");
+//    	 hal.console->printf("#########\r\n");
 
         // decode packet
         mavlink_command_long_t packet;
 
-        hal.console->printf("packet.param1=%3.0f\r\n",packet.param1);
-        hal.console->printf("packet.param2=%%3.0f\r\n",packet.param2);
-        hal.console->printf("packet.param3=%%3.0f\r\n",packet.param3);
-        hal.console->printf("packet.param4=%%3.0f\r\n",packet.param4);
-        hal.console->printf("packet.param5=%%3.0f\r\n",packet.param5);
-        hal.console->printf("packet.param6=%%3.0f\r\n",packet.param6);
-        hal.console->printf("packet.param7=%%3.0f\r\n",packet.param7);
-
-        hal.console->printf("packet.command=%d\r\n",packet.command);
-        hal.console->printf("packet.target_system=%d\r\n",packet.target_system);
-        hal.console->printf("packet.target_component=%d\r\n",packet.target_component);
-        hal.console->printf("packet.confirmation=%d\r\n",packet.confirmation);
+//        hal.console->printf("packet.param1=%3.0f\r\n",packet.param1);
+//        hal.console->printf("packet.param2=%%3.0f\r\n",packet.param2);
+//        hal.console->printf("packet.param3=%%3.0f\r\n",packet.param3);
+//        hal.console->printf("packet.param4=%%3.0f\r\n",packet.param4);
+//        hal.console->printf("packet.param5=%%3.0f\r\n",packet.param5);
+//        hal.console->printf("packet.param6=%%3.0f\r\n",packet.param6);
+//        hal.console->printf("packet.param7=%%3.0f\r\n",packet.param7);
+//
+//        hal.console->printf("packet.command=%d\r\n",packet.command);
+//        hal.console->printf("packet.target_system=%d\r\n",packet.target_system);
+//        hal.console->printf("packet.target_component=%d\r\n",packet.target_component);
+//        hal.console->printf("packet.confirmation=%d\r\n",packet.confirmation);
 
         mavlink_msg_command_long_decode(msg, &packet);
 
@@ -940,7 +940,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
 
         case MAV_CMD_NAV_TAKEOFF:
         {
-        	 hal.console->printf("$$$$$$$\r\n");
+//        	 hal.console->printf("$$$$$$$\r\n");
             // param3 : horizontal navigation by pilot acceptable
             // param4 : yaw angle   (not supported)
             // param5 : latitude    (not supported)
@@ -952,11 +952,11 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
 //            if (copter.flightmode->do_user_takeoff(takeoff_alt, is_zero(packet.param3)))
             if (copter.flightmode->do_user_takeoff(takeoff_alt,1))
             {
-            	hal.console->printf("$$$$$$$12\r\n");
+//            	hal.console->printf("$$$$$$$12\r\n");
                 result = MAV_RESULT_ACCEPTED;
             } else
             {
-            	hal.console->printf("$$$$$$$123\r\n");
+//            	hal.console->printf("$$$$$$$123\r\n");
                 result = MAV_RESULT_FAILED;
             }
 

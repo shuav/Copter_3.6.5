@@ -42,7 +42,8 @@ void GCS_MAVLINK::handle_serial_control(const mavlink_message_t *msg)
 
     bool exclusive = (packet.flags & SERIAL_CONTROL_FLAG_EXCLUSIVE) != 0;
 
-    switch (packet.device) {
+    switch (packet.device)
+    {
     case SERIAL_CONTROL_DEV_TELEM1:
         stream = port = hal.uartC;
         lock_channel(MAVLINK_COMM_1, exclusive);
@@ -69,7 +70,8 @@ void GCS_MAVLINK::handle_serial_control(const mavlink_message_t *msg)
         // not supported yet
         return;
     }
-    if (stream == nullptr) {
+    if (stream == nullptr)
+    {
         // this is probably very bad
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
         AP_HAL::panic("stream is nullptr");

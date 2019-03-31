@@ -7,7 +7,7 @@
 #include "ap_version.h"
 
 //#define THISFIRMWARE "ArduCopter V3.6.5"
-#define THISFIRMWARE "CHZBV7-1.00_t"
+#define THISFIRMWARE "SUAV-1.00_t"
 // the following line is parsed by the autotest scripts
 #define FIRMWARE_VERSION 3,6,5,FIRMWARE_VERSION_TYPE_OFFICIAL
 

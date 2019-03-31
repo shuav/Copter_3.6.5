@@ -815,7 +815,7 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
 
     	if(AP_RangeFinder_HL6_M30::detect(serial_manager,serial_instance))
     	{
-    		hal.uartC->printf("HL6_M30 detect finish \r\n");
+//    		hal.uartC->printf("HL6_M30 detect finish \r\n");
     		 drivers[instance] = new AP_RangeFinder_HL6_M30(state[instance], serial_manager, serial_instance++);
 
     	}

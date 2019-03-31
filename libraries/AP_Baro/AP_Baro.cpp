@@ -509,9 +509,9 @@ void AP_Baro::init(void)
         break;
  //添加自己的代码
     case AP_BoardConfig::PX4_BOARD_FMUV5:
-    	hal.console->printf("%%%%%%%%%%\r\n");
+//    	hal.console->printf("%%%%%%%%%%\r\n");
     	ADD_BACKEND(AP_BARO_SPL06_001::probe(*this,std::move(hal.spi->get_device(HAL_BARO_SPL06_001_NAME))));
-    	hal.console->printf("%%%%%%%%%%\r\n");
+//    	hal.console->printf("%%%%%%%%%%\r\n");
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
         break;
         
@@ -675,7 +675,7 @@ void AP_Baro::update(void)
             drivers[i]->backend_update(i);
         }
     }
-    hal.console->printf("_num_drivers=%d\r\n",_num_drivers);
+//    hal.console->printf("_num_drivers=%d\r\n",_num_drivers);
     for (uint8_t i=0; i<_num_sensors; i++)
     {
         if (sensors[i].healthy)

@@ -4,7 +4,7 @@
 *文件功能：函数任务
 *修改日期：2018-9-7
 *修改作者：cihang_uav
-*备注信息： 编译代码：./waf configure --board fmuv5
+*备注信息： 编译代码：./waf configure --board fmuv6
 *备注信息： 下载代码：./waf --targets bin/arducopter --upload
 *备注信息： 更新子模块：git submodule update --init --recursive
 *备注信息： Code commit statistics can be found here: https://github.com/ArduPilot/ardupilot/graphs/contributors

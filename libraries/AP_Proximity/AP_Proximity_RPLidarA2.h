@@ -33,6 +33,25 @@
 #include "AP_Proximity_Backend.h"
 #include <AP_HAL/AP_HAL.h>                   ///< for UARTDriver
 
+// Commands
+//-----------------------------------------
+
+// Commands without payload and response
+#define RPLIDAR_PREAMBLE               0xA5   //起始帧头命令
+#define RPLIDAR_CMD_STOP               0x25   //阻止帧头命令
+#define RPLIDAR_CMD_SCAN               0x20   //请求进入扫描状态命令
+#define RPLIDAR_CMD_FORCE_SCAN         0x21   //请求进入扫描状态命令，强制数据输出
+#define RPLIDAR_CMD_RESET              0x40   //阻止帧头命令
+
+// Commands without payload but have response
+#define RPLIDAR_CMD_GET_DEVICE_INFO    0x50   //单次获取设备序列号等信息
+#define RPLIDAR_CMD_GET_DEVICE_HEALTH  0x52   //获取设备健康
+
+// Commands with payload and have response
+#define RPLIDAR_CMD_EXPRESS_SCAN       0x82   //多次请求进入扫描采样状态，并工作在最高采样频率下
+
+
+
 
 class AP_Proximity_RPLidarA2 : public AP_Proximity_Backend
 {
