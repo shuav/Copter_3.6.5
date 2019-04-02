@@ -1,17 +1,9 @@
 #include "Copter.h"
 
-
-
-/**************************************************************************************************************
-*函数原型：void Copter::read_barometer(void)
-*函数功能：读取气压计数据
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：return barometric altitude in centimeters
-****************************************************************************************************************/
+// return barometric altitude in centimeters
 void Copter::read_barometer(void)
 {
-    barometer.update();  //更新高度信息
+    barometer.update();
 
     baro_alt = barometer.get_altitude() * 100.0f;
     baro_climbrate = barometer.get_climb_rate() * 100.0f;
@@ -19,13 +11,6 @@ void Copter::read_barometer(void)
     motors->set_air_density_ratio(barometer.get_air_density_ratio());
 }
 
-/**************************************************************************************************************
-*函数原型：void Copter::init_rangefinder(void)
-*函数功能：测距传感器初始化
-*修改日期：2019-2-18
-*修改作者：
-*备注信息：
-****************************************************************************************************************/
 void Copter::init_rangefinder(void)
 {
 #if RANGEFINDER_ENABLED == ENABLED
@@ -35,53 +20,42 @@ void Copter::init_rangefinder(void)
 #endif
 }
 
-/**************************************************************************************************************
-*函数原型：void Copter::read_rangefinder(void)
-*函数功能：读取近距离传感器数据
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：return rangefinder altitude in centimeters
-****************************************************************************************************************/
-
+// return rangefinder altitude in centimeters
 void Copter::read_rangefinder(void)
 {
 #if RANGEFINDER_ENABLED == ENABLED
-    rangefinder.update(); //获取数据state.distance_cm
+    rangefinder.update();
 
-    if (rangefinder.num_sensors() > 0 && should_log(MASK_LOG_CTUN))
-    {
+    if (rangefinder.num_sensors() > 0 &&
+        should_log(MASK_LOG_CTUN)) {
         DataFlash.Log_Write_RFND(rangefinder);
     }
 
     rangefinder_state.alt_healthy = ((rangefinder.status_orient(ROTATION_PITCH_270) == RangeFinder::RangeFinder_Good) && (rangefinder.range_valid_count_orient(ROTATION_PITCH_270) >= RANGEFINDER_HEALTH_MAX));
 
-    int16_t temp_alt = rangefinder.distance_cm_orient(ROTATION_PITCH_270); //从低端获取数据
+    int16_t temp_alt = rangefinder.distance_cm_orient(ROTATION_PITCH_270);
 
  #if RANGEFINDER_TILT_CORRECTION == ENABLED
-    //通过测距仪更正高度------- correct alt for angle of the rangefinder
+    // correct alt for angle of the rangefinder
     temp_alt = (float)temp_alt * MAX(0.707f, ahrs.get_rotation_body_to_ned().c.z);
  #endif
 
-    rangefinder_state.alt_cm = temp_alt; //获取高度信息
+    rangefinder_state.alt_cm = temp_alt;
 
-    //对高度信息进行滤波，将会被AC_WPNav使用------- filter rangefinder for use by AC_WPNav
+    // filter rangefinder for use by AC_WPNav
     uint32_t now = AP_HAL::millis();
 
-    if (rangefinder_state.alt_healthy)
-    {
-        if (now - rangefinder_state.last_healthy_ms > RANGEFINDER_TIMEOUT_MS)
-        {
+    if (rangefinder_state.alt_healthy) {
+        if (now - rangefinder_state.last_healthy_ms > RANGEFINDER_TIMEOUT_MS) {
             // reset filter if we haven't used it within the last second
             rangefinder_state.alt_cm_filt.reset(rangefinder_state.alt_cm);
-        } else
-        {
+        } else {
             rangefinder_state.alt_cm_filt.apply(rangefinder_state.alt_cm, 0.05f);
         }
         rangefinder_state.last_healthy_ms = now;
     }
 
-    //向航点导航库发送测距仪高度和健康信息----------send rangefinder altitude and health to waypoint navigation library
-    //最终获取数据 _rangefinder_alt_cm
+    // send rangefinder altitude and health to waypoint navigation library
     wp_nav->set_rangefinder_alt(rangefinder_state.enabled, rangefinder_state.alt_healthy, rangefinder_state.alt_cm_filt.get());
 
 #else
@@ -91,29 +65,15 @@ void Copter::read_rangefinder(void)
 #endif
 }
 
-/**************************************************************************************************************
-*函数原型：bool Copter::rangefinder_alt_ok()
-*函数功能：更新高度是否OK？
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：return true if rangefinder_alt can be used
-****************************************************************************************************************/
-
+// return true if rangefinder_alt can be used
 bool Copter::rangefinder_alt_ok()
 {
     return (rangefinder_state.enabled && rangefinder_state.alt_healthy);
 }
 
-
-
-/**************************************************************************************************************
-*函数原型：void Copter::rpm_update(void)
-*函数功能：读取转速更新
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：update RPM sensors
-****************************************************************************************************************/
-
+/*
+  update RPM sensors
+ */
 void Copter::rpm_update(void)
 {
 #if RPM_ENABLED == ENABLED
@@ -125,23 +85,15 @@ void Copter::rpm_update(void)
     }
 #endif
 }
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 // initialise compass
 void Copter::init_compass()
 {
-    if (!g.compass_enabled)
-    {
+    if (!g.compass_enabled) {
         return;
     }
 
-    if (!compass.init() || !compass.read())
-    {
+    if (!compass.init() || !compass.read()) {
         // make sure we don't pass a broken compass to DCM
         hal.console->printf("COMPASS INIT ERROR\n");
         Log_Write_Error(ERROR_SUBSYSTEM_COMPASS,ERROR_CODE_FAILED_TO_INITIALISE);
@@ -149,13 +101,7 @@ void Copter::init_compass()
     }
     ahrs.set_compass(&compass);
 }
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
   if the compass is enabled then try to accumulate a reading
   also update initial location used for declination
@@ -177,14 +123,8 @@ void Copter::compass_accumulate(void)
         }
     }
 }
-/**************************************************************************************************************
-*函数原型：void Copter::init_optflow()
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：initialise optical flow sensor
-****************************************************************************************************************/
 
+// initialise optical flow sensor
 void Copter::init_optflow()
 {
 #if OPTFLOW == ENABLED
@@ -192,135 +132,67 @@ void Copter::init_optflow()
     optflow.init();
 #endif      // OPTFLOW == ENABLED
 }
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：called at 200hz
-****************************************************************************************************************/
+
+// called at 200hz
 #if OPTFLOW == ENABLED
 void Copter::update_optical_flow(void)
 {
     static uint32_t last_of_update = 0;
 
-    //如果没有使能，立即退出------exit immediately if not enabled
-    if (!optflow.enabled())
-    {
+    // exit immediately if not enabled
+    if (!optflow.enabled()) {
         return;
     }
 
-    //从传感器读取数据-----read from sensor
+    // read from sensor
     optflow.update();
 
     // write to log and send to EKF if new data has arrived
-    if (optflow.last_update() != last_of_update)
-    {
+    if (optflow.last_update() != last_of_update) {
         last_of_update = optflow.last_update();
         uint8_t flowQuality = optflow.quality();
-        Vector2f flowRate = optflow.flowRate();               //光流速度
-        Vector2f bodyRate = optflow.bodyRate();               //机体速度
-        const Vector3f &posOffset = optflow.get_pos_offset(); //偏移量
-        ahrs.writeOptFlowMeas(flowQuality, flowRate, bodyRate, last_of_update, posOffset); //获取测量值
-        if (g.log_bitmask & MASK_LOG_OPTFLOW)
-        {
+        Vector2f flowRate = optflow.flowRate();
+        Vector2f bodyRate = optflow.bodyRate();
+        const Vector3f &posOffset = optflow.get_pos_offset();
+        ahrs.writeOptFlowMeas(flowQuality, flowRate, bodyRate, last_of_update, posOffset);
+        if (g.log_bitmask & MASK_LOG_OPTFLOW) {
             Log_Write_Optflow();
         }
     }
 }
 #endif  // OPTFLOW == ENABLED
 
-
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void Copter::compass_cal_update()
 {
     static uint32_t compass_cal_stick_gesture_begin = 0;
-    static float x,y,z;
-    if (compass.get_count() == 0)
-    {
-        // no compass available
-        return;
-    }
-    if (!hal.util->get_soft_armed())
-    {
+
+    if (!hal.util->get_soft_armed()) {
         compass.compass_cal_update();
     }
 
-    if (compass.is_calibrating())
-    {
-        if (channel_yaw->get_control_in() < -4000 && channel_throttle->get_control_in() > 900)
-        {
+    if (compass.is_calibrating()) {
+        if (channel_yaw->get_control_in() < -4000 && channel_throttle->get_control_in() > 900) {
             compass.cancel_calibration_all();
         }
-	/* notify LED */
-	    if(AP_Notify::flags.compass_cal_status == 1)
-	    {
-		  z += ahrs.get_gyro().z * 0.01; // 100hz->0.01
-		  if(fabsf(z) > 6.2832) //4pi 12.566 2pi 6.2832  3pi 9.424
-			AP_Notify::flags.compass_cal_status = 2;
-	    }
-	    else if(AP_Notify::flags.compass_cal_status == 2)
-	    {
-			y += ahrs.get_gyro().y * 0.01;
-			if(fabsf(y) > 6.2832)
-				AP_Notify::flags.compass_cal_status = 3;
-	    }
-	    else if(AP_Notify::flags.compass_cal_status == 3)
-	    {
-			x += ahrs.get_gyro().x * 0.01;
-			if(fabsf(x) > 6.2832)
-			{
-				AP_Notify::flags.compass_cal_status = 0;
-				//
-				if(!compass.accept_calibration_mask(0xff, true))
-				{
-					AP_Notify::flags.compass_cal_status = 4;
-				}
-			 }
-	    }
-
-
-
-
-
-    } else
-    {
+    } else {
         bool stick_gesture_detected = compass_cal_stick_gesture_begin != 0 && !motors->armed() && channel_yaw->get_control_in() > 4000 && channel_throttle->get_control_in() > 900;
         uint32_t tnow = millis();
 
-        if (!stick_gesture_detected)
-        {
+        if (!stick_gesture_detected) {
             compass_cal_stick_gesture_begin = tnow;
-        } else if (tnow-compass_cal_stick_gesture_begin > 1000*COMPASS_CAL_STICK_GESTURE_TIME)
-        {
+        } else if (tnow-compass_cal_stick_gesture_begin > 1000*COMPASS_CAL_STICK_GESTURE_TIME) {
 #ifdef CAL_ALWAYS_REBOOT
             compass.start_calibration_all(true,true,COMPASS_CAL_STICK_DELAY,true);
 #else
             compass.start_calibration_all(true,true,COMPASS_CAL_STICK_DELAY,false);
 #endif
-            x = y = z = 0;
-            AP_Notify::flags.compass_cal_status = 1;
         }
     }
 }
 
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void Copter::accel_cal_update()
 {
-    if (hal.util->get_soft_armed())
-    {
+    if (hal.util->get_soft_armed()) {
         return;
     }
     ins.acal_update();
@@ -338,14 +210,7 @@ void Copter::accel_cal_update()
 #endif
 }
 
-/**************************************************************************************************************
-*函数原型：void Copter::init_proximity(void)
-*函数功能：初始化近距离传感器
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：initialise proximity sensor
-****************************************************************************************************************/
-
+// initialise proximity sensor
 void Copter::init_proximity(void)
 {
 #if PROXIMITY_ENABLED == ENABLED
@@ -354,13 +219,6 @@ void Copter::init_proximity(void)
 #endif
 }
 
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 // update error mask of sensors and subsystems. The mask
 // uses the MAV_SYS_STATUS_* values from mavlink. If a bit is set
 // then it indicates that the sensor or subsystem is present but
@@ -582,13 +440,6 @@ void Copter::init_visual_odom()
 #endif
 }
 
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 // update visual odometry sensor
 void Copter::update_visual_odom()
 {
@@ -611,13 +462,7 @@ void Copter::update_visual_odom()
     }
 #endif
 }
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 // winch and wheel encoder initialisation
 void Copter::winch_init()
 {
@@ -626,13 +471,7 @@ void Copter::winch_init()
     g2.winch.init(&g2.wheel_encoder);
 #endif
 }
-/**************************************************************************************************************
-*函数原型：函数头文件
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 // winch and wheel encoder update
 void Copter::winch_update()
 {

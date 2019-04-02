@@ -7,44 +7,23 @@
 *
 *****************************************************************************/
 
-
-/**************************************************************************************************************
-*函数原型：static void mavlink_delay_cb_static()
-*函数功能：数据初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 static void mavlink_delay_cb_static()
 {
     copter.mavlink_delay_cb();
 }
 
-/**************************************************************************************************************
-*函数原型：static void failsafe_check_static()
-*函数功能：数据初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 static void failsafe_check_static()
 {
     copter.failsafe_check();
 }
 
-/**************************************************************************************************************
-*函数原型：void Copter::init_ardupilot()
-*函数功能：数据初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：函数初始化
-****************************************************************************************************************/
 void Copter::init_ardupilot()
 {
-    //初始化USB------------------initialise serial port
+    // initialise serial port
     serial_manager.init_console();
 
-    //初始化车辆容量----init vehicle capabilties
+    // init vehicle capabilties
     init_capabilities();
 
     hal.console->printf("\n\nInit %s"
@@ -54,37 +33,35 @@ void Copter::init_ardupilot()
 
     //
     // Report firmware version code expect on console (check of actual EEPROM format version is done in load_parameters function)
-    //报告无人机的版本
+    //
     report_version();
 
-    //加载EEPROM里面的参数-----load parameters from EEPROM
+    // load parameters from EEPROM
     load_parameters();
 
     // time per loop - this gets updated in the main loop() based on
     // actual loop rate
-    //计算loop所需要的时间
     G_Dt = 1.0 / scheduler.get_loop_rate_hz();
 
 #if STATS_ENABLED == ENABLED
     // initialise stats module
     g2.stats.init();
 #endif
-    //设置dataflash的log
+
     gcs().set_dataflash(&DataFlash);
 
-    //正确认识地面站---------- identify ourselves correctly with the ground station
+    // identify ourselves correctly with the ground station
     mavlink_system.sysid = g.sysid_this_mav;
     
-    //初始化串行端口-----initialise serial ports
+    // initialise serial ports
     serial_manager.init();
 
-    //尽快的初始化USB端口，尽可能报告错误----setup first port early to allow BoardConfig to report errors
+    // setup first port early to allow BoardConfig to report errors
     gcs().chan(0).setup_uart(serial_manager, AP_SerialManager::SerialProtocol_MAVLink, 0);
 
 
     // Register mavlink_delay_cb, which will run anytime you have
     // more than 5ms remaining in your call to hal.scheduler->delay
-    //注册mavlink_delay_cb函数，他将在任何时候运行调用hal.scheduler->delay延迟函数，超过5ms
     hal.scheduler->register_delay_callback(mavlink_delay_cb_static, 5);
     
     BoardConfig.init();
@@ -100,16 +77,16 @@ void Copter::init_ardupilot()
     // init winch and wheel encoder
     winch_init();
 
-    //初始化通知系统，主要运行RGBLED函数的初始化-----initialise notify system
+    // initialise notify system
     notify.init(true);
     notify_flight_mode();
 
-    //初始化电池检测系统-------------------------initialise battery monitor
+    // initialise battery monitor
     battery.init();
 
     // Init RSSI
     rssi.init();
-    //初始化气压计函数
+    
     barometer.init();
 
     // setup telem slots with serial ports
@@ -154,15 +131,11 @@ void Copter::init_ardupilot()
 
     // allocate the motors class
     allocate_motors();
-    // 初始化配制为水泵的pwm口
-    if (SRV_Channels::function_assigned(SRV_Channel::k_sprayer_pump))
-    {
-    	SRV_Channels::set_output_pwm(SRV_Channel::k_sprayer_pump, 1094);
-    }
-    //设置电机并输出到ESCS----- sets up motors and output to escs
+
+    // sets up motors and output to escs
     init_rc_out();
 
-    //电机已初始化，因此可以发送参数---- motors initialised so parameters can be sent
+    // motors initialised so parameters can be sent
     ap.initialised_params = true;
 
     // initialise which outputs Servo and Relay events can use
@@ -185,7 +158,7 @@ void Copter::init_ardupilot()
     gps.set_log_gps_bit(MASK_LOG_GPS);
     gps.init(serial_manager);
 
-    init_compass(); //罗盘初始化
+    init_compass();
 
 #if OPTFLOW == ENABLED
     // make optflow available to AHRS
@@ -206,7 +179,7 @@ void Copter::init_ardupilot()
     attitude_control->parameter_sanity_check();
     pos_control->set_dt(scheduler.get_loop_period_s());
 
-    //初始化光流传感器驱动------init the optical flow sensor
+    // init the optical flow sensor
     init_optflow();
 
 #if MOUNT == ENABLED
@@ -243,10 +216,10 @@ void Copter::init_ardupilot()
     barometer.set_log_baro_bit(MASK_LOG_IMU);
     barometer.calibrate();
 
-    //初始化测距仪--------------initialise rangefinder
+    // initialise rangefinder
     init_rangefinder();
 
-    //初始接近传感器------------init proximity sensor
+    // init proximity sensor
     init_proximity();
 
 #if BEACON_ENABLED == ENABLED
@@ -300,40 +273,21 @@ void Copter::init_ardupilot()
     ins.set_log_raw_bit(MASK_LOG_IMU_RAW);
 
     // enable output to motors
-    if (arming.rc_calibration_checks(true))
-    {
+    if (arming.rc_calibration_checks(true)) {
         enable_motor_output();
     }
 
     // disable safety if requested
     BoardConfig.init_safety();
-     // 只支持4 6 8轴
-       switch(g2.frame_class.get())
-       {
-       case 1:
-       	motor_num = 4;
-       	break;
-       case 2:
-       	motor_num = 6;
-       	break;
-       case 3:
-       	motor_num = 8;
-       	break;
-       default:
-       	motor_num = 0;
-       	break;
-       }
-    //默认启用RC覆盖--------------default enable RC override
+
+    // default enable RC override
     copter.ap.rc_override_enable = true;
     
     hal.console->printf("\nReady to FLY ");
 
-    //标志初始化已经完成------------flag that initialisation has completed
+    // flag that initialisation has completed
     ap.initialised = true;
 }
-
-
-
 
 
 //******************************************************************************

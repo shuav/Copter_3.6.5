@@ -59,14 +59,6 @@ _baudrate(57600)
     uart_drivers[serial_num] = this;
 }
 
-
-/**************************************************************************************************************
-*函数原型：void Copter::init_ardupilot()
-*函数功能：数据初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：函数初始化
-****************************************************************************************************************/
 /*
   thread for handling UART send/receive
 
@@ -99,25 +91,17 @@ void UARTDriver::uart_thread(void* arg)
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void UARTDriver::thread_init(void)
-*函数功能：数据初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：initialise UART thread
-****************************************************************************************************************/
-
+/*
+  initialise UART thread
+ */
 void UARTDriver::thread_init(void)
 {
-    if (uart_thread_ctx)
-    {
+    if (uart_thread_ctx) {
         // already initialised
         return;
     }
 #if CH_CFG_USE_HEAP == TRUE
-    uart_thread_ctx = chThdCreateFromHeap(NULL,
-                                          THD_WORKING_AREA_SIZE(2048),
+    uart_thread_ctx = thread_create_alloc(THD_WORKING_AREA_SIZE(2048),
                                           "apm_uart",
                                           APM_UART_PRIORITY,
                                           uart_thread,
@@ -136,19 +120,12 @@ static int hal_console_vprintf(const char *fmt, va_list arg)
     return 1; // wrong length, but doesn't matter for what this is used for
 }
 
-/**************************************************************************************************************
-*函数原型：void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
-*函数功能：串口初始化
-*修改日期：2019-3-16
-*修改作者：cihang_uav
-*备注信息：函数初始化
-****************************************************************************************************************/
+
 void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
 {
     thread_init();
     
-    if (sdef.serial == nullptr)
-    {
+    if (sdef.serial == nullptr) {
         return;
     }
     uint16_t min_tx_buffer = 4096;
@@ -156,12 +133,10 @@ void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
     // on PX4 we have enough memory to have a larger transmit and
     // receive buffer for all ports. This means we don't get delays
     // while waiting to write GPS config packets
-    if (txS < min_tx_buffer)
-    {
+    if (txS < min_tx_buffer) {
         txS = min_tx_buffer;
     }
-    if (rxS < min_rx_buffer)
-    {
+    if (rxS < min_rx_buffer) {
         rxS = min_rx_buffer;
     }
 
@@ -172,29 +147,24 @@ void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
       thrashing of the heap once we are up. The ttyACM0 driver may not
       connect for some time after boot
      */
-    while (_in_timer)
-    {
+    while (_in_timer) {
         hal.scheduler->delay(1);
     }
-    if (rxS != _readbuf.get_size())
-    {
+    if (rxS != _readbuf.get_size()) {
         _initialised = false;
         _readbuf.set_size(rxS);
     }
 
     bool clear_buffers = false;
-    if (b != 0)
-    {
+    if (b != 0) {
         // clear buffers on baudrate change, but not on the console (which is usually USB)
-        if (_baudrate != b && hal.console != this)
-        {
+        if (_baudrate != b && hal.console != this) {
             clear_buffers = true;
         }
         _baudrate = b;
     }
     
-    if (clear_buffers)
-    {
+    if (clear_buffers) {
         _readbuf.clear();
     }
 
@@ -210,29 +180,24 @@ void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
     /*
       allocate the write buffer
      */
-    while (_in_timer)
-    {
+    while (_in_timer) {
         hal.scheduler->delay(1);
     }
-    if (txS != _writebuf.get_size())
-    {
+    if (txS != _writebuf.get_size()) {
         _initialised = false;
         _writebuf.set_size(txS);
     }
 
-    if (clear_buffers)
-    {
+    if (clear_buffers) {
         _writebuf.clear();
     }
 
-    if (sdef.is_usb)
-    {
+    if (sdef.is_usb) {
 #ifdef HAVE_USB_SERIAL
         /*
          * Initializes a serial-over-USB CDC driver.
          */
-        if (!_device_initialised)
-        {
+        if (!_device_initialised) {
             sduObjectInit((SerialUSBDriver*)sdef.serial);
             sduStart((SerialUSBDriver*)sdef.serial, &serusbcfg);
             /*
@@ -247,8 +212,7 @@ void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
             _device_initialised = true;
         }
 #endif
-    } else
-    {
+    } else {
 #if HAL_USE_SERIAL == TRUE
         if (_baudrate != 0) {
             bool was_initialised = _device_initialised;            
@@ -334,14 +298,6 @@ void UARTDriver::begin(uint32_t b, uint16_t rxS, uint16_t txS)
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void UARTDriver::dma_tx_allocate(Shared_DMA *ctx)
-*函数功能：dma初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：函数初始化
-****************************************************************************************************************/
 void UARTDriver::dma_tx_allocate(Shared_DMA *ctx)
 {
 #if HAL_USE_SERIAL == TRUE

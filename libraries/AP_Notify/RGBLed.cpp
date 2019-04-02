@@ -20,9 +20,8 @@
 #include <AP_GPS/AP_GPS.h>
 #include "RGBLed.h"
 #include "AP_Notify.h"
-#include <GCS_MAVLink/GCS.h>
-extern const AP_HAL::HAL& hal;
 
+extern const AP_HAL::HAL& hal;
 
 RGBLed::RGBLed(uint8_t led_off, uint8_t led_bright, uint8_t led_medium, uint8_t led_dim):
     _led_off(led_off),
@@ -69,8 +68,7 @@ void RGBLed::update_colours(void)
 {
     uint8_t brightness = _led_bright;
 
-    switch (pNotify->_rgb_led_brightness)
-    {
+    switch (pNotify->_rgb_led_brightness) {
     case RGB_LED_OFF:
         brightness = _led_off;
         break;
@@ -87,8 +85,7 @@ void RGBLed::update_colours(void)
 
     // slow rate from 50Hz to 10hz
     counter++;
-    if (counter < 5)
-    {
+    if (counter < 5) {
         return;
     }
 
@@ -107,16 +104,13 @@ void RGBLed::update_colours(void)
     }
 
     // initialising pattern
-    if (AP_Notify::flags.initialising)
-    {
-        if (step & 1)
-        {
+    if (AP_Notify::flags.initialising) {
+        if (step & 1) {
             // odd steps display red light
             _red_des = brightness;
             _blue_des = _led_off;
             _green_des = _led_off;
-        } else
-        {
+        } else {
             // even display blue light
             _red_des = _led_off;
             _blue_des = brightness;
@@ -127,179 +121,6 @@ void RGBLed::update_colours(void)
         return;
     }
     
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // 记录用于植保的AB点信息
-            if(AP_Notify::flags.zigzag_record >1)//AP_Notify::flags.zigzag_record=16,记录A,//AP_Notify::flags.zigzag_record=81,记录B点信息
-            {
-
-            	// record B point
-            	bool yellow = ((AP_Notify::flags.zigzag_record%2) == 0)?false:true;
-            	switch(step)
-            	{
-            	case 0:
-            	case 1:
-            	case 2:
-            	case 3:
-            	case 4:
-            		if(yellow)  //记录B点闪烁黄灯
-            		{
-                        // yellow on
-                        _red_des = brightness;
-                        _blue_des = _led_off;
-                        _green_des = brightness;
-            		}
-            		else //记录A点闪烁蓝灯
-            		{
-                        // blue on
-                        _red_des = _led_off;
-                        _blue_des = brightness;
-                        _green_des = _led_off;
-            		}
-            		break;
-            	case 5:
-            	case 6:
-            	case 7:
-            	case 8:
-            		//灭灯
-                    _red_des = _led_off;
-                    _blue_des = _led_off;
-                    _green_des = _led_off;
-            		break;
-            	case 9:
-            		if(yellow)
-            		{
-            			AP_Notify::flags.zigzag_record /= 3;//黄灯持续闪烁4次
-            		}
-            		else
-            		{
-            			AP_Notify::flags.zigzag_record /= 2;//蓝灯闪烁四次
-            		}
-                    _red_des = _led_off;
-                    _blue_des = _led_off;
-                    _green_des = _led_off;
-            		break;
-            	}
-            	//gcs().send_text(MAV_SEVERITY_WARNING, "Record AB point Finsh");
-            	return;
-            }
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-            if((AP_Notify::flags.zigzag_record_mode)>1)
-              {
-                     	switch(step)  //1,2,3，4,5
-                     	{
-
-                     		case 0:
-                     		case 1:
-                     		case 2:
-                     		case 3:
-                     		case 4:
-                                // green on
-                                _red_des = _led_off;
-                                _blue_des = _led_off;
-                                _green_des = brightness;
-                     	           break;
-                     		case 5:
-                     		case 6:
-                     		case 7:
-                     		case 8:
-                                _red_des = _led_off;
-                                _blue_des = _led_off;
-                                _green_des = _led_off;
-                  	               break;
-                     		case 9:
-                     			    AP_Notify::flags.zigzag_record_mode/=2;
-                                   _red_des = _led_off;
-                                   _blue_des = _led_off;
-                                   _green_des = _led_off;
-
-
-                 	               break;
-                     	}
-                     	  gcs().send_text(MAV_SEVERITY_WARNING,"Zigzag MODE RECORD"); //发送自动信息
-                     	 return;
-
-                  }
-
-            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                  if((AP_Notify::flags.zigzag_record_mode_erro)>1)
-                  {
-                    switch(step)  //1,2,3，4,5
-                    {
-
-                     		case 0:
-                     		case 1:
-                     		case 2:
-                     		case 3:
-                     		case 4:
-                     			//红灯闪烁两次
-                                _red_des =brightness ;
-                                _blue_des = _led_off;
-                                _green_des = _led_off;
-                     	           break;
-                     		case 5:
-                     		case 6:
-                     		case 7:
-                     		case 8:
-                     			//这里主要实现关闭
-                                _red_des = _led_off;
-                                _blue_des = _led_off;
-                                _green_des = _led_off;
-                  	               break;
-                     		case 9:
-                     			   AP_Notify::flags.zigzag_record_mode_erro/=2;
-                     			  //这里主要实现关闭
-                                   _red_des = _led_off;
-                                   _blue_des = _led_off;
-                                   _green_des = _led_off;
-
-                 	               break;
-                     	}
-                     gcs().send_text(MAV_SEVERITY_WARNING,"Zigzag MODE ERRO"); //发送自动信息
-                     return;
-
-                      }
-
-    	    // for compass calibration
-        if(AP_Notify::flags.compass_cal_status != 0)
-        {
-        	switch(AP_Notify::flags.compass_cal_status)
-        	{
-        	case 1:
-                // red on
-                _red_des = brightness;
-                _blue_des = brightness;
-                _green_des = _led_off;
-        		break;
-        	case 2:
-                // red on
-                _red_des = brightness;
-                _blue_des = _led_off;
-                _green_des = brightness;
-        		break;
-        	case 3:
-                // red on
-                _red_des = _led_off;
-                _blue_des = brightness;
-                _green_des = brightness;
-        		break;
-        	case 4:
-                // red on
-                _red_des = brightness;
-                _blue_des = _led_off;
-                _green_des = _led_off;
-        		break;
-        	default:
-        		break;
-        	}
-        	return;
-        }
-
-
-
-
-
     // save trim and esc calibration pattern
     if (AP_Notify::flags.save_trim || AP_Notify::flags.esc_calibration) {
         switch(step) {
@@ -345,8 +166,7 @@ void RGBLed::update_colours(void)
     // gps failsafe pattern : flashing yellow and blue
     // ekf_bad pattern : flashing yellow and red
     if (AP_Notify::flags.failsafe_radio || AP_Notify::flags.failsafe_battery ||
-            AP_Notify::flags.ekf_bad || AP_Notify::flags.gps_glitching || AP_Notify::flags.leak_detected)
-    {
+            AP_Notify::flags.ekf_bad || AP_Notify::flags.gps_glitching || AP_Notify::flags.leak_detected) {
         switch(step) {
             case 0:
             case 1:
@@ -363,8 +183,7 @@ void RGBLed::update_colours(void)
             case 7:
             case 8:
             case 9:
-                if (AP_Notify::flags.leak_detected)
-                {
+                if (AP_Notify::flags.leak_detected) {
                     // purple if leak detected
                     _red_des = brightness;
                     _blue_des = brightness;
@@ -392,16 +211,13 @@ void RGBLed::update_colours(void)
     }
 
     // solid green or blue if armed
-    if (AP_Notify::flags.armed)
-    {
+    if (AP_Notify::flags.armed) {
         // solid green if armed with GPS 3d lock
-        if (AP_Notify::flags.gps_status >= AP_GPS::GPS_OK_FIX_3D)
-        {
+        if (AP_Notify::flags.gps_status >= AP_GPS::GPS_OK_FIX_3D) {
             _red_des = _led_off;
             _blue_des = _led_off;
             _green_des = brightness;
-        }else
-        {
+        }else{
             // solid blue if armed with no GPS lock
             _red_des = _led_off;
             _blue_des = brightness;
@@ -410,10 +226,8 @@ void RGBLed::update_colours(void)
         return;
     }else{
         // double flash yellow if failing pre-arm checks
-        if (!AP_Notify::flags.pre_arm_check)
-        {
-            switch(step)
-            {
+        if (!AP_Notify::flags.pre_arm_check) {
+            switch(step) {
                 case 0:
                 case 1:
                 case 4:
@@ -440,17 +254,14 @@ void RGBLed::update_colours(void)
             // slow flashing green if disarmed with GPS 3d lock (and no DGPS)
             // flashing blue if disarmed with no gps lock or gps pre_arm checks have failed
             bool fast_green = AP_Notify::flags.gps_status >= AP_GPS::GPS_OK_FIX_3D_DGPS && AP_Notify::flags.pre_arm_gps_check;
-            switch(step)
-            {
+            switch(step) {
                 case 0:
-                    if (fast_green)
-                    {
+                    if (fast_green) {
                         _green_des = brightness;
                     }
                     break;
                 case 1:
-                    if (fast_green)
-                    {
+                    if (fast_green) {
                         _green_des = _led_off;
                     }
                     break;
@@ -477,8 +288,7 @@ void RGBLed::update_colours(void)
                     }
                     break;
                 case 5:
-                    if (fast_green)
-                    {
+                    if (fast_green) {
                         _green_des = _led_off;
                     }
                     break;
@@ -514,12 +324,10 @@ void RGBLed::update_colours(void)
 // at 50Hz
 void RGBLed::update()
 {
-    if (!pNotify->_rgb_led_override)
-    {
+    if (!pNotify->_rgb_led_override) {
         update_colours();
         set_rgb(_red_des, _green_des, _blue_des);
-    } else
-    {
+    } else {
         update_override();
     }
 }

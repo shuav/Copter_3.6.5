@@ -337,8 +337,6 @@ private:
             uint8_t compass_init_location   : 1; // 26      // true when the compass's initial location has been set
             uint8_t rc_override_enable      : 1; // 27      // aux switch rc_override is allowed
             uint8_t armed_with_switch       : 1; // 28      // we armed using a arming switch
-            uint8_t compass_calibration     : 1; // 29      // �����л�5ͨ��3����Ϊtrue
-            uint8_t motor_spin_all          : 1; // 30      // ���е����ת��������Ϊtrue;
         };
         uint32_t value;
     } ap_t;
@@ -393,7 +391,6 @@ private:
 
         uint8_t rc_override_active  : 1; // true if rc control are overwritten by ground station
         uint8_t radio               : 1; // A status flag for the radio failsafe
-        uint8_t battery             : 1; // 2   // A status flag for the battery failsafe
         uint8_t gcs                 : 1; // A status flag for the ground station failsafe
         uint8_t ekf                 : 1; // true if ekf failsafe has occurred
         uint8_t terrain             : 1; // true if the missing terrain data failsafe has occurred
@@ -582,25 +579,12 @@ private:
     // avoidance of adsb enabled vehicles (normally manned vehicles)
     AP_Avoidance_Copter avoidance_adsb{ahrs, adsb};
 #endif
-    bool arm_gesture_release;
+
     // last valid RC input time
     uint32_t last_radio_update_ms;
 
     // last esc calibration notification update
     uint32_t esc_calibration_notify_update_ms;
-
-
-    // 5通道校磁
-    int8_t rc5_status;
-    uint32_t rc5_last_trigger_ms;
-	int8_t rc5_last_pos;
-
-    // 解锁时电机转动序号
-    uint8_t motor_spin_seq;
-    uint8_t motor_spin_loop_count;
-    uint8_t motor_num;
-
-
 
 #if VISUAL_ODOMETRY_ENABLED == ENABLED
     // last visual odometry update time
@@ -767,8 +751,6 @@ private:
     // failsafe.cpp
     void failsafe_enable();
     void failsafe_disable();
-    void failsafe_drug_event(void); //药效检测
-    void set_failsafe_battery(bool b);
 #if ADVANCED_FAILSAFE == ENABLED
     void afs_fs_check(void);
 #endif
@@ -843,7 +825,6 @@ private:
 
     // motor_test.cpp
     void motor_test_output();
-    void motor_armed_spin_order();
     bool mavlink_motor_test_check(mavlink_channel_t chan, bool check_rc);
     MAV_RESULT mavlink_motor_test_start(mavlink_channel_t chan, uint8_t motor_seq, uint8_t throttle_type, uint16_t throttle_value, float timeout_sec, uint8_t motor_count);
     void motor_test_stop();
@@ -920,7 +901,6 @@ private:
     void reset_control_switch();
     bool read_3pos_switch(uint8_t chan, uint8_t &ret) const WARN_IF_UNUSED;
     void read_aux_switches();
-    void read_multiaux_switches();
     void init_aux_switches();
     void init_aux_switch_function(int8_t ch_option, uint8_t ch_flag);
     void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag);
@@ -993,16 +973,6 @@ private:
 #if MODE_FOLLOW_ENABLED == ENABLED
     ModeFollow mode_follow;
 #endif
-#if MODE_ZIGZAG_ENABLED == ENABLED
-    ModeZigZag mode_zigzag;
-#endif
-
-#if MODE_USHAPE_ENABLED == ENABLED
-    ModeUshape mode_ushape;
-#endif
-
-
-
 #if MODE_GUIDED_ENABLED == ENABLED
     ModeGuided mode_guided;
 #endif

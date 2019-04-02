@@ -40,7 +40,6 @@
 #include "AP_Baro_LPS2XH.h"
 #include "AP_Baro_FBM320.h"
 #include "AP_Baro_DPS280.h"
-#include "AP_Baro_SPL06_001.h"
 #if HAL_WITH_UAVCAN
 #include "AP_Baro_UAVCAN.h"
 #endif
@@ -371,12 +370,10 @@ float AP_Baro::get_external_temperature(const uint8_t instance) const
 
 bool AP_Baro::_add_backend(AP_Baro_Backend *backend)
 {
-    if (!backend)
-    {
+    if (!backend) {
         return false;
     }
-    if (_num_drivers >= BARO_MAX_DRIVERS)
-    {
+    if (_num_drivers >= BARO_MAX_DRIVERS) {
         AP_HAL::panic("Too many barometer drivers");
     }
     drivers[_num_drivers++] = backend;
@@ -395,25 +392,18 @@ bool AP_Baro::_add_backend(AP_Baro_Backend *backend)
        } \
     } while (0)
 
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro::init(void)
-*函数功能：
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：initialise the barometer object, loading backend drivers
-****************************************************************************************************************/
+/*
+  initialise the barometer object, loading backend drivers
+ */
 void AP_Baro::init(void)
 {
-    //确保之前没有保存地面温度---- ensure that there isn't a previous ground temperature saved
-    if (!is_zero(_user_ground_temperature))
-    {
+    // ensure that there isn't a previous ground temperature saved
+    if (!is_zero(_user_ground_temperature)) {
         _user_ground_temperature.set_and_save(0.0f);
         _user_ground_temperature.notify();
     }
 
-    if (_hil_mode)
-    {
+    if (_hil_mode) {
         drivers[0] = new AP_Baro_HIL(*this);
         _num_drivers = 1;
         return;
@@ -426,19 +416,16 @@ void AP_Baro::init(void)
     
 #if HAL_WITH_UAVCAN
     bool added;
-    do
-    {
+    do {
         added = _add_backend(AP_Baro_UAVCAN::probe(*this));
-        if (_num_drivers == BARO_MAX_DRIVERS || _num_sensors == BARO_MAX_INSTANCES)
-        {
+        if (_num_drivers == BARO_MAX_DRIVERS || _num_sensors == BARO_MAX_INSTANCES) {
             return;
         }
     } while (added);
 #endif
 
 #if AP_FEATURE_BOARD_DETECT
-    switch (AP_BoardConfig::get_board_type())
-    {
+    switch (AP_BoardConfig::get_board_type()) {
     case AP_BoardConfig::PX4_BOARD_PX4V1:
 #ifdef HAL_BARO_MS5611_I2C_BUS
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
@@ -507,12 +494,10 @@ void AP_Baro::init(void)
                                             std::move(hal.i2c_mgr->get_device(1, 0x63)),
                                             std::move(hal.spi->get_device(HAL_INS_MPU60x0_NAME))));
         break;
- //添加自己的代码
+
     case AP_BoardConfig::PX4_BOARD_FMUV5:
-//    	hal.console->printf("%%%%%%%%%%\r\n");
-    	ADD_BACKEND(AP_BARO_SPL06_001::probe(*this,std::move(hal.spi->get_device(HAL_BARO_SPL06_001_NAME))));
-//    	hal.console->printf("%%%%%%%%%%\r\n");
-        ADD_BACKEND(AP_Baro_MS56XX::probe(*this,std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
+        ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
+                                          std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
         break;
         
     default:
@@ -587,8 +572,7 @@ void AP_Baro::init(void)
 #endif
 
     // can optionally have baro on I2C too
-    if (_ext_bus >= 0)
-    {
+    if (_ext_bus >= 0) {
 #if APM_BUILD_TYPE(APM_BUILD_ArduSub)
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
                                           std::move(hal.i2c_mgr->get_device(_ext_bus, HAL_BARO_MS5837_I2C_ADDR)), AP_Baro_MS56XX::BARO_MS5837));
@@ -615,107 +599,78 @@ void AP_Baro::init(void)
 
 #if CONFIG_HAL_BOARD != HAL_BOARD_F4LIGHT // most boards requires external baro
 
-    if (_num_drivers == 0 || _num_sensors == 0 || drivers[0] == nullptr)
-    {
+    if (_num_drivers == 0 || _num_sensors == 0 || drivers[0] == nullptr) {
         AP_BoardConfig::sensor_config_error("Baro: unable to initialise driver");
     }
 #endif
 }
 
-
-/**************************************************************************************************************
-*函数原型：bool AP_Baro::should_df_log() const
-*函数功能：
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 bool AP_Baro::should_df_log() const
 {
     DataFlash_Class *instance = DataFlash_Class::instance();
-    if (instance == nullptr)
-    {
+    if (instance == nullptr) {
         return false;
     }
-    if (_log_baro_bit == (uint32_t)-1)
-    {
+    if (_log_baro_bit == (uint32_t)-1) {
         return false;
     }
-    if (!instance->should_log(_log_baro_bit))
-    {
+    if (!instance->should_log(_log_baro_bit)) {
         return false;
     }
     return true;
 }
 
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro::update(void)
-*函数功能：更新气压计
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：call update on all drivers
-****************************************************************************************************************/
+/*
+  call update on all drivers
+ */
 void AP_Baro::update(void)
 {
-    if (fabsf(_alt_offset - _alt_offset_active) > 0.01f)
-    {
+    if (fabsf(_alt_offset - _alt_offset_active) > 0.01f) {
         // If there's more than 1cm difference then slowly slew to it via LPF.
         // The EKF does not like step inputs so this keeps it happy.
         _alt_offset_active = (0.95f*_alt_offset_active) + (0.05f*_alt_offset);
-    } else
-    {
+    } else {
         _alt_offset_active = _alt_offset;
     }
 
-    if (!_hil_mode) //如果不是软件仿真
-    {
-        for (uint8_t i=0; i<_num_drivers; i++)
-        {
+    if (!_hil_mode) {
+        for (uint8_t i=0; i<_num_drivers; i++) {
             drivers[i]->backend_update(i);
         }
     }
-//    hal.console->printf("_num_drivers=%d\r\n",_num_drivers);
-    for (uint8_t i=0; i<_num_sensors; i++)
-    {
-        if (sensors[i].healthy)
-        {
+
+    for (uint8_t i=0; i<_num_sensors; i++) {
+        if (sensors[i].healthy) {
             // update altitude calculation
             float ground_pressure = sensors[i].ground_pressure;
-            if (!is_positive(ground_pressure) || isnan(ground_pressure) || isinf(ground_pressure))
-            {
+            if (!is_positive(ground_pressure) || isnan(ground_pressure) || isinf(ground_pressure)) {
                 sensors[i].ground_pressure = sensors[i].pressure;
             }
             float altitude = sensors[i].altitude;
             float corrected_pressure = sensors[i].pressure + sensors[i].p_correction;
-            if (sensors[i].type == BARO_TYPE_AIR)
-            {
+            if (sensors[i].type == BARO_TYPE_AIR) {
                 altitude = get_altitude_difference(sensors[i].ground_pressure, corrected_pressure);
-            } else if (sensors[i].type == BARO_TYPE_WATER)
-            {
+            } else if (sensors[i].type == BARO_TYPE_WATER) {
                 //101325Pa is sea level air pressure, 9800 Pascal/ m depth in water.
                 //No temperature or depth compensation for density of water.
                 altitude = (sensors[i].ground_pressure - corrected_pressure) / 9800.0f / _specific_gravity;
             }
             // sanity check altitude
             sensors[i].alt_ok = !(isnan(altitude) || isinf(altitude));
-            if (sensors[i].alt_ok)
-            {
+            if (sensors[i].alt_ok) {
                 sensors[i].altitude = altitude + _alt_offset_active;
             }
         }
         if (_hil.have_alt) {
             sensors[0].altitude = _hil.altitude;
         }
-        if (_hil.have_last_update)
-        {
+        if (_hil.have_last_update) {
             sensors[0].last_update_ms = _hil.last_update_ms;
         }
     }
 
     // ensure the climb rate filter is updated
-    if (healthy())
-    {
+    if (healthy()) {
         _climb_rate_filter.update(get_altitude(), get_last_update());
     }
 
@@ -724,10 +679,8 @@ void AP_Baro::update(void)
         _primary = _primary_baro;
     } else {
         _primary = 0;
-        for (uint8_t i=0; i<_num_sensors; i++)
-        {
-            if (healthy(i))
-            {
+        for (uint8_t i=0; i<_num_sensors; i++) {
+            if (healthy(i)) {
                 _primary = i;
                 break;
             }
@@ -735,80 +688,56 @@ void AP_Baro::update(void)
     }
 
     // logging
-    if (should_df_log() && !AP::ahrs().have_ekf_logging())
-    {
+    if (should_df_log() && !AP::ahrs().have_ekf_logging()) {
         DataFlash_Class::instance()->Log_Write_Baro();
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro::accumulate(void)
-*函数功能：更新气压计
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：call accumulate on all drivers
-****************************************************************************************************************/
-
+/*
+  call accumulate on all drivers
+ */
 void AP_Baro::accumulate(void)
 {
-    for (uint8_t i=0; i<_num_drivers; i++)
-    {
+    for (uint8_t i=0; i<_num_drivers; i++) {
         drivers[i]->accumulate();
     }
 }
 
-/**************************************************************************************************************
-*函数原型：uint8_t AP_Baro::register_sensor(void)
-*函数功能：注册一个新的传感器，声明传感器插槽。如果我们出局了，它会恐慌的
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：register a new sensor, claiming a sensor slot. If we are out of slots it will panic
-****************************************************************************************************************/
+
+/* register a new sensor, claiming a sensor slot. If we are out of
+   slots it will panic
+*/
 uint8_t AP_Baro::register_sensor(void)
 {
-    if (_num_sensors >= BARO_MAX_INSTANCES)
-    {
+    if (_num_sensors >= BARO_MAX_INSTANCES) {
         AP_HAL::panic("Too many barometers");
     }
     return _num_sensors++;
 }
 
-/**************************************************************************************************************
-*函数原型：bool AP_Baro::all_healthy(void) const
-*函数功能：检查所有气压计是否正常
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：check if all barometers are healthy
-****************************************************************************************************************/
+
+/*
+  check if all barometers are healthy
+ */
 bool AP_Baro::all_healthy(void) const
 {
-     for (uint8_t i=0; i<_num_sensors; i++)
-     {
-         if (!healthy(i))
-         {
+     for (uint8_t i=0; i<_num_sensors; i++) {
+         if (!healthy(i)) {
              return false;
          }
      }
      return _num_sensors > 0;
 }
-/**************************************************************************************************************
-*函数原型：void AP_Baro::set_pressure_correction(uint8_t instance, float p_correction)
-*函数功能：气压计校正
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：set a pressure correction from AP_TempCalibration
-****************************************************************************************************************/
+
+// set a pressure correction from AP_TempCalibration
 void AP_Baro::set_pressure_correction(uint8_t instance, float p_correction)
 {
-    if (instance < _num_sensors)
-    {
+    if (instance < _num_sensors) {
         sensors[instance].p_correction = p_correction;
     }
 }
 
-namespace AP
-{
+namespace AP {
 
 AP_Baro &baro()
 {
@@ -816,6 +745,3 @@ AP_Baro &baro()
 }
 
 };
-/**************************************************************************************************************
-*                                File-END函数
-****************************************************************************************************************/

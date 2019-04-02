@@ -22,10 +22,6 @@
 #include "AP_RangeFinder_BBB_PRU.h"
 #include "AP_RangeFinder_LightWareI2C.h"
 #include "AP_RangeFinder_LightWareSerial.h"
-#include "AP_RangeFinder_NRA24.h"
-#include "AP_RangeFinder_HL6_M30.h"
-#include "AP_RangeFinder_HPS_166U.h"
-#include "AP_RangeFinder_HPS_167UL.h"
 #if (CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BEBOP || \
      CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_DISCO) &&      \
     defined(HAVE_LIBIIO)
@@ -41,10 +37,8 @@
 #include "AP_RangeFinder_Benewake.h"
 #include <AP_BoardConfig/AP_BoardConfig.h>
 
-
-
-
 extern const AP_HAL::HAL &hal;
+
 // table of user settable parameters
 const AP_Param::GroupInfo RangeFinder::var_info[] = {
     // @Param: _TYPE
@@ -607,50 +601,32 @@ void RangeFinder::init(void)
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void RangeFinder::update(void)
-*函数功能：数据更新
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：update RangeFinder state for all instances. This should be called at
-         around 10Hz by main loop
-****************************************************************************************************************/
-
+/*
+  update RangeFinder state for all instances. This should be called at
+  around 10Hz by main loop
+ */
 void RangeFinder::update(void)
 {
-    for (uint8_t i=0; i<num_instances; i++)
-    {
-        if (drivers[i] != nullptr)
-        {
-            if (state[i].type == RangeFinder_TYPE_NONE)
-            {
+    for (uint8_t i=0; i<num_instances; i++) {
+        if (drivers[i] != nullptr) {
+            if (state[i].type == RangeFinder_TYPE_NONE) {
                 // allow user to disable a rangefinder at runtime
                 state[i].status = RangeFinder_NotConnected;
                 state[i].range_valid_count = 0;
                 continue;
             }
-            drivers[i]->update(); //调用数据更新函数
+            drivers[i]->update();
             drivers[i]->update_pre_arm_check();
         }
     }
 }
 
-/**************************************************************************************************************
-*函数原型：bool RangeFinder::_add_backend(AP_RangeFinder_Backend *backend)
-*函数功能：增加底层驱动
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 bool RangeFinder::_add_backend(AP_RangeFinder_Backend *backend)
 {
-    if (!backend)
-    {
+    if (!backend) {
         return false;
     }
-    if (num_instances == RANGEFINDER_MAX_INSTANCES)
-    {
+    if (num_instances == RANGEFINDER_MAX_INSTANCES) {
         AP_HAL::panic("Too many RANGERS backends");
     }
 
@@ -658,15 +634,9 @@ bool RangeFinder::_add_backend(AP_RangeFinder_Backend *backend)
     return true;
 }
 
-
-/**************************************************************************************************************
-*函数原型：void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
-*函数功能：识别驱动
-*修改日期：2019-2-20
-*修改作者：cihang_uav
-*备注信息：detect if an instance of a rangefinder is connected.
-****************************************************************************************************************/
-
+/*
+  detect if an instance of a rangefinder is connected. 
+ */
 void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
 {
     enum RangeFinder_Type _type = (enum RangeFinder_Type)state[instance].type.get();
@@ -674,15 +644,18 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
     case RangeFinder_TYPE_PLI2C:
     case RangeFinder_TYPE_PLI2CV3:
     case RangeFinder_TYPE_PLI2CV3HP:
-        if (!_add_backend(AP_RangeFinder_PulsedLightLRF::detect(1, state[instance], _type))) {
-            _add_backend(AP_RangeFinder_PulsedLightLRF::detect(0, state[instance], _type));
+        for (int8_t i=3; i>=0; i--) {
+            if (_add_backend(AP_RangeFinder_PulsedLightLRF::detect(i, state[instance], _type))) {
+                break;
+            }
         }
         break;
     case RangeFinder_TYPE_MBI2C:
-        if (!_add_backend(AP_RangeFinder_MaxsonarI2CXL::detect(state[instance],
-                                                hal.i2c_mgr->get_device(1, AP_RANGE_FINDER_MAXSONARI2CXL_DEFAULT_ADDR)))) {
-            _add_backend(AP_RangeFinder_MaxsonarI2CXL::detect(state[instance],
-                                               hal.i2c_mgr->get_device(0, AP_RANGE_FINDER_MAXSONARI2CXL_DEFAULT_ADDR)));
+        for (int8_t i=3; i>=0; i--) {
+            if (_add_backend(AP_RangeFinder_MaxsonarI2CXL::detect(state[instance],
+                                                                  hal.i2c_mgr->get_device(i, AP_RANGE_FINDER_MAXSONARI2CXL_DEFAULT_ADDR)))) {
+                break;
+            }
         }
         break;
     case RangeFinder_TYPE_LWI2C:
@@ -691,28 +664,31 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
             _add_backend(AP_RangeFinder_LightWareI2C::detect(state[instance],
                 hal.i2c_mgr->get_device(HAL_RANGEFINDER_LIGHTWARE_I2C_BUS, state[instance].address)));
 #else
-            if (!_add_backend(AP_RangeFinder_LightWareI2C::detect(state[instance],
-                                                                  hal.i2c_mgr->get_device(1, state[instance].address)))) {
-                _add_backend(AP_RangeFinder_LightWareI2C::detect(state[instance],
-                                                                 hal.i2c_mgr->get_device(0, state[instance].address)));
+            for (int8_t i=3; i>=0; i--) {
+                if (_add_backend(AP_RangeFinder_LightWareI2C::detect(state[instance],
+                                                                     hal.i2c_mgr->get_device(i, state[instance].address)))) {
+                    break;
+                }
             }
 #endif
         }
         break;
     case RangeFinder_TYPE_TRI2C:
         if (state[instance].address) {
-            if (!_add_backend(AP_RangeFinder_TeraRangerI2C::detect(state[instance],
-                                                                   hal.i2c_mgr->get_device(1, state[instance].address)))) {
-                _add_backend(AP_RangeFinder_TeraRangerI2C::detect(state[instance],
-                                                                  hal.i2c_mgr->get_device(0, state[instance].address)));
+            for (int8_t i=3; i>=0; i--) {
+                if (_add_backend(AP_RangeFinder_TeraRangerI2C::detect(state[instance],
+                                                                      hal.i2c_mgr->get_device(i, state[instance].address)))) {
+                    break;
+                }
             }
         }
         break;
     case RangeFinder_TYPE_VL53L0X:
-        if (!_add_backend(AP_RangeFinder_VL53L0X::detect(state[instance],
-                                                         hal.i2c_mgr->get_device(1, 0x29)))) {
-            _add_backend(AP_RangeFinder_VL53L0X::detect(state[instance],
-                                                        hal.i2c_mgr->get_device(0, 0x29)));
+        for (int8_t i=3; i>=0; i--) {
+            if (_add_backend(AP_RangeFinder_VL53L0X::detect(state[instance],
+                                                            hal.i2c_mgr->get_device(i, 0x29)))) {
+                break;
+            }
         }
         break;
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
@@ -730,8 +706,7 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
         break;
 #endif
     case RangeFinder_TYPE_LWSER:
-        if (AP_RangeFinder_LightWareSerial::detect(serial_manager, serial_instance))
-        {
+        if (AP_RangeFinder_LightWareSerial::detect(serial_manager, serial_instance)) {
             drivers[instance] = new AP_RangeFinder_LightWareSerial(state[instance], serial_manager, serial_instance++);
         }
         break;
@@ -780,8 +755,7 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
         }
         break;
     case RangeFinder_TYPE_BenewakeTF02:
-        if (AP_RangeFinder_Benewake::detect(serial_manager, serial_instance))
-        {
+        if (AP_RangeFinder_Benewake::detect(serial_manager, serial_instance)) {
             drivers[instance] = new AP_RangeFinder_Benewake(state[instance], serial_manager, serial_instance++, AP_RangeFinder_Benewake::BENEWAKE_TF02);
         }
         break;
@@ -790,37 +764,6 @@ void RangeFinder::detect_instance(uint8_t instance, uint8_t& serial_instance)
             drivers[instance] = new AP_RangeFinder_Benewake(state[instance], serial_manager, serial_instance++, AP_RangeFinder_Benewake::BENEWAKE_TFmini);
         }
         break;
-    case RangeFinder_TYPE_NRA24:
-    	if(AP_RangeFinder_NRA24::detect(serial_manager,serial_instance))
-    	{
-         drivers[instance] = new AP_RangeFinder_NRA24(state[instance], serial_manager, serial_instance++);
-
-    	}
-    	break;
-    case RangeFinder_TYPE_HPS166U:
-    	if(AP_RangeFinder_HPS_166U::detect(serial_manager,serial_instance))
-    	{
-    		 drivers[instance] = new AP_RangeFinder_HPS_166U(state[instance], serial_manager, serial_instance++);
-
-    	}
-    	break;
-    case RangeFinder_TYPE_HPS167UL:
-    	if(AP_RangeFinder_HPS_167UL::detect(serial_manager,serial_instance))
-    	{
-    		 drivers[instance] = new AP_RangeFinder_HPS_167UL(state[instance], serial_manager, serial_instance++);
-
-    	}
-    	break;
-    case RangeFinder_TYPE_HL6_M30:
-
-    	if(AP_RangeFinder_HL6_M30::detect(serial_manager,serial_instance))
-    	{
-//    		hal.uartC->printf("HL6_M30 detect finish \r\n");
-    		 drivers[instance] = new AP_RangeFinder_HL6_M30(state[instance], serial_manager, serial_instance++);
-
-    	}
-    	break;
-
     default:
         break;
     }
@@ -886,13 +829,6 @@ AP_RangeFinder_Backend *RangeFinder::find_instance(enum Rotation orientation) co
     return nullptr;
 }
 
-/**************************************************************************************************************
-*函数原型：uint16_t RangeFinder::distance_cm_orient(enum Rotation orientation) const
-*函数功能：从底端获取数据
-*修改日期：2019-2-20
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 uint16_t RangeFinder::distance_cm_orient(enum Rotation orientation) const
 {
     AP_RangeFinder_Backend *backend = find_instance(orientation);
@@ -902,13 +838,6 @@ uint16_t RangeFinder::distance_cm_orient(enum Rotation orientation) const
     return backend->distance_cm();
 }
 
-/**************************************************************************************************************
-*函数原型：uint16_t RangeFinder::voltage_mv_orient(enum Rotation orientation) const
-*函数功能：
-*修改日期：2019-2-20
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 uint16_t RangeFinder::voltage_mv_orient(enum Rotation orientation) const
 {
     AP_RangeFinder_Backend *backend = find_instance(orientation);

@@ -330,21 +330,12 @@ void AP_Baro_MS56XX::_update_and_wrap_accumulator(uint32_t *accum, uint32_t val,
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro_MS56XX::update()
-*函数功能：更新气压计信息
-*修改日期：2019-2-18
-*修改作者：
-*备注信息：
-****************************************************************************************************************/
 void AP_Baro_MS56XX::update()
 {
     uint32_t sD1, sD2;
     uint8_t d1count, d2count;
 
-    if (!_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
-    {
+    if (!_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
         return;
     }
 
@@ -367,9 +358,8 @@ void AP_Baro_MS56XX::update()
     if (d2count != 0) {
         _D2 = ((float)sD2) / d2count;
     }
-//    hal.console->printf("_ms56xx_type=%d\r\n",_ms56xx_type);
-    switch (_ms56xx_type)
-    {
+
+    switch (_ms56xx_type) {
     case BARO_MS5607:
         _calculate_5607();
         break;
@@ -384,16 +374,7 @@ void AP_Baro_MS56XX::update()
     }
 }
 
-
-
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro_MS56XX::_calculate_5611()
-*函数功能：测距传感器初始化
-*修改日期：2019-2-18
-*修改作者：
-*备注信息：Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
-****************************************************************************************************************/
+// Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
 void AP_Baro_MS56XX::_calculate_5611()
 {
     float dT;
@@ -425,21 +406,10 @@ void AP_Baro_MS56XX::_calculate_5611()
 
     float pressure = (_D1*SENS/2097152 - OFF)/32768;
     float temperature = (TEMP + 2000) * 0.01f;
-//	hal.console->printf("****ms5611\r\n");
-//	hal.console->printf("_instance=%d\r\n",_instance);
-//	hal.console->printf("-------\r\n");
-//	hal.console->printf("pressure=%d\r\n",pressure);
     _copy_to_frontend(_instance, pressure, temperature);
 }
 
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro_MS56XX::_calculate_5607()
-*函数功能：测距传感器初始化
-*修改日期：2019-2-18
-*修改作者：
-*备注信息：Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
-****************************************************************************************************************/
+// Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
 void AP_Baro_MS56XX::_calculate_5607()
 {
     float dT;
@@ -473,13 +443,8 @@ void AP_Baro_MS56XX::_calculate_5607()
     float temperature = (TEMP + 2000) * 0.01f;
     _copy_to_frontend(_instance, pressure, temperature);
 }
-/**************************************************************************************************************
-*函数原型：void AP_Baro_MS56XX::_calculate_5637()
-*函数功能：测距传感器初始化
-*修改日期：2019-2-18
-*修改作者：
-*备注信息：Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
-****************************************************************************************************************/
+
+// Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
 void AP_Baro_MS56XX::_calculate_5637()
 {
     int32_t dT, TEMP;
@@ -512,13 +477,7 @@ void AP_Baro_MS56XX::_calculate_5637()
     _copy_to_frontend(_instance, (float)pressure, temperature);
 }
 
-/**************************************************************************************************************
-*函数原型：void AP_Baro_MS56XX::_calculate_5837()
-*函数功能：测距传感器初始化
-*修改日期：2019-2-18
-*修改作者：
-*备注信息：Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
-****************************************************************************************************************/
+// Calculate Temperature and compensated Pressure in real units (Celsius degrees*100, mbar*100).
 void AP_Baro_MS56XX::_calculate_5837()
 {
     int32_t dT, TEMP;
@@ -552,7 +511,3 @@ void AP_Baro_MS56XX::_calculate_5837()
 
     _copy_to_frontend(_instance, (float)pressure, temperature);
 }
-
-/**************************************************************************************************************
-*                               File-end
-****************************************************************************************************************/

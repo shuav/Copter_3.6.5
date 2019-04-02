@@ -68,8 +68,6 @@ public:
         Notify_LED_UAVCAN                   = (1 << 5), // UAVCAN RGB LED
         Notify_LED_NCP5623_I2C_External     = (1 << 6), // External NCP5623
         Notify_LED_NCP5623_I2C_Internal     = (1 << 7), // Internal NCP5623
-		Notify_LED_CIHANG_I2C_Internal      = (1 << 8), // cihang_uav
-		Notify_LED_CIHANG_PWM_Internal      = (1 << 9), // cihang_uav
         Notify_LED_MAX
     };
 
@@ -100,18 +98,6 @@ public:
         bool waiting_for_throw;   // true when copter is in THROW mode and waiting to detect the user hand launch
         bool powering_off;        // true when the vehicle is powering off
         bool video_recording;     // true when the vehicle is recording video
-        //ab点模式
-        uint32_t zigzag_record      : 8;    // 0 = no record, 1 = time out, 2^n = record b point, 3^n = record a point
-        uint32_t zigzag_record_mode    ;    // 0 = no record, 1 = time out, 2^n = record b point, 3^n = record a point
-        uint32_t zigzag_record_mode_erro    ;    // 0 = no record, 1 = time out, 2^n = record b point, 3^n = record a point
-        //U型控制模式
-        uint32_t ushape_record      : 8;    // 0 = no record, 1 = time out, 2^n = record b point, 3^n = record a point
-        uint32_t ushape_record_mode    ;    // 0 = no record, 1 = time out, 2^n = record b point, 3^n = record a point
-        uint32_t ushape_record_mode_erro    ;    // 0 = no record, 1 = time out, 2^n = record b point, 3^n = record a point
-
-        //增加避障碍指示灯
-        uint32_t avoid_record:3;           //0=没有进入避障区域，在避障区域
-        uint32_t compass_cal_status : 3;    // 1 if a compass calibration status
     };
 
     /// notify_events_type - bitmask of active events.

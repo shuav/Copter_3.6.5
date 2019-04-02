@@ -15,8 +15,7 @@ void Copter::arm_motors_check()
 
     // check if arming/disarm using rudder is allowed
     AP_Arming::ArmingRudder arming_rudder = arming.get_rudder_arming_type();
-    if (arming_rudder == AP_Arming::ARMING_RUDDER_DISABLED)
-    {
+    if (arming_rudder == AP_Arming::ARMING_RUDDER_DISABLED) {
         return;
     }
 
@@ -28,19 +27,15 @@ void Copter::arm_motors_check()
 #endif
 
     // ensure throttle is down
-    if (channel_throttle->get_control_in() > 0|| channel_pitch->get_control_in() < 4000)
-    {
-    	arm_gesture_release = true;
+    if (channel_throttle->get_control_in() > 0) {
         arming_counter = 0;
         return;
     }
 
-	int16_t tmp_roll = channel_roll->get_control_in();
     int16_t yaw_in = channel_yaw->get_control_in();
 
     // full right
-    if (yaw_in > 4000&& tmp_roll < -4000)
-    {
+    if (yaw_in > 4000) {
 
         // increase the arming counter to a maximum of 1 beyond the auto trim counter
         if (arming_counter <= AUTO_TRIM_DELAY) {
@@ -48,15 +43,11 @@ void Copter::arm_motors_check()
         }
 
         // arm the motors and configure for flight
-        if (arming_counter == ARM_DELAY && !motors->armed())
-        {
+        if (arming_counter == ARM_DELAY && !motors->armed()) {
             // reset arming counter if arming fail
-            if (!init_arm_motors(false))
-            {
+            if (!init_arm_motors(false)) {
                 arming_counter = 0;
             }
-			// 解锁手势未松开
-            arm_gesture_release = false;
         }
 
         // arm the motors and configure for flight
@@ -67,10 +58,8 @@ void Copter::arm_motors_check()
         }
 
     // full left and rudder disarming is enabled
-    } else if ((yaw_in < -4000) && (tmp_roll > 4000)&& (arming_rudder == AP_Arming::ARMING_RUDDER_ARMDISARM))
-    {
-        if (!flightmode->has_manual_throttle() && !ap.land_complete)
-        {
+    } else if ((yaw_in < -4000) && (arming_rudder == AP_Arming::ARMING_RUDDER_ARMDISARM)) {
+        if (!flightmode->has_manual_throttle() && !ap.land_complete) {
             arming_counter = 0;
             return;
         }
@@ -81,16 +70,13 @@ void Copter::arm_motors_check()
         }
 
         // disarm the motors
-        if (arming_counter == DISARM_DELAY && motors->armed())
-        {
+        if (arming_counter == DISARM_DELAY && motors->armed()) {
             init_disarm_motors();
         }
 
     // Yaw is centered so reset arming counter
-    } else
-    {
+    } else {
         arming_counter = 0;
-    	arm_gesture_release = true;
     }
 }
 
@@ -99,16 +85,10 @@ void Copter::auto_disarm_check()
 {
     uint32_t tnow_ms = millis();
     uint32_t disarm_delay_ms = 1000*constrain_int16(g.disarm_delay, 0, 127);
-    // 如果飞机已经解锁，但解锁手势未松开，则退出
-    if(motors->armed() && (!arm_gesture_release || !ap.motor_spin_all))
-    {
-    	auto_disarm_begin = tnow_ms;
-    	return;
-    }
+
     // exit immediately if we are already disarmed, or if auto
     // disarming is disabled
-    if (!motors->armed() || disarm_delay_ms == 0 || control_mode == THROW)
-    {
+    if (!motors->armed() || disarm_delay_ms == 0 || control_mode == THROW) {
         auto_disarm_begin = tnow_ms;
         return;
     }
@@ -312,7 +292,6 @@ void Copter::init_disarm_motors()
     hal.util->set_soft_armed(false);
 
     ap.in_arming_delay = false;
-    ap.motor_spin_all = false;
 }
 
 // motors_output - send output to motors library which will adjust and send to ESCs and servos
@@ -329,10 +308,7 @@ void Copter::motors_output()
 #endif
 
     // Update arming delay state
-    //所有电机转去起来后改变状态
-
-    if (ap.in_arming_delay && (!motors->armed() || millis()-arm_time_ms > ARMING_DELAY_SEC*1.0e3f || control_mode == THROW)&&( ap.motor_spin_all))
-    {
+    if (ap.in_arming_delay && (!motors->armed() || millis()-arm_time_ms > ARMING_DELAY_SEC*1.0e3f || control_mode == THROW)) {
         ap.in_arming_delay = false;
     }
 
@@ -346,29 +322,18 @@ void Copter::motors_output()
     SRV_Channels::output_ch_all();
 
     // check if we are performing the motor test
-    if (ap.motor_test)
-    {
+    if (ap.motor_test) {
         motor_test_output();
-    } else
-    {
-    	bool interlock = motors->armed() /*&& !ap.in_arming_delay*/ && (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
-//        bool interlock = motors->armed() && !ap.in_arming_delay && (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
-        if (!motors->get_interlock() && interlock)
-        {
+    } else {
+        bool interlock = motors->armed() && !ap.in_arming_delay && (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
+        if (!motors->get_interlock() && interlock) {
             motors->set_interlock(true);
-            motors->set_motor_enabled(0);
             Log_Write_Event(DATA_MOTORS_INTERLOCK_ENABLED);
-        } else if (motors->get_interlock() && !interlock)
-        {
+        } else if (motors->get_interlock() && !interlock) {
             motors->set_interlock(false);
             Log_Write_Event(DATA_MOTORS_INTERLOCK_DISABLED);
         }
 
-        if(interlock && ap.in_arming_delay)
-        {
-
-        	motor_armed_spin_order();
-        }
         // send output signals to motors
         motors->output();
     }

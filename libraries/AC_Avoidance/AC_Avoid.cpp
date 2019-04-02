@@ -8,7 +8,6 @@
 
 const AP_Param::GroupInfo AC_Avoid::var_info[] = {
 
-	//传感器避障使能
     // @Param: ENABLE
     // @DisplayName: Avoidance control enable/disable
     // @Description: Enabled/disable stopping at fence
@@ -19,7 +18,7 @@ const AP_Param::GroupInfo AC_Avoid::var_info[] = {
 
     // @Param: ANGLE_MAX
     // @DisplayName: Avoidance max lean angle in non-GPS flight modes
-    // @Description: Max lean angle used to avoid obstacles while in non-GPS modes---非GPS模式下用于避开障碍物的最大倾斜角度
+    // @Description: Max lean angle used to avoid obstacles while in non-GPS modes
     // @Units: cdeg
     // @Range: 0 4500
     // @User: Standard
@@ -27,15 +26,14 @@ const AP_Param::GroupInfo AC_Avoid::var_info[] = {
 
     // @Param: DIST_MAX
     // @DisplayName: Avoidance distance maximum in non-GPS flight modes
-    // @Description: Distance from object at which obstacle avoidance will begin in non-GPS modes--在非GPS模式下，与障碍物避让开始的物体之间的距离
+    // @Description: Distance from object at which obstacle avoidance will begin in non-GPS modes
     // @Units: m
     // @Range: 1 30
     // @User: Standard
     AP_GROUPINFO("DIST_MAX", 3,  AC_Avoid, _dist_max, AC_AVOID_NONGPS_DIST_MAX_DEFAULT),
 
     // @Param: MARGIN
-    // @DisplayName: Avoidance distance margin in GPS modes--在GPS模式下的最大避障距离
-	//在GPS模式下，车辆将尝试与物体保持至少此距离（以米为单位）
+    // @DisplayName: Avoidance distance margin in GPS modes
     // @Description: Vehicle will attempt to stay at least this distance (in meters) from objects while in GPS modes
     // @Units: m
     // @Range: 1 10
@@ -44,7 +42,7 @@ const AP_Param::GroupInfo AC_Avoid::var_info[] = {
 
     // @Param: BEHAVE
     // @DisplayName: Avoidance behaviour
-    // @Description: Avoidance behaviour (slide or stop):避障行为
+    // @Description: Avoidance behaviour (slide or stop)
     // @Values: 0:Slide,1:Stop
     // @User: Standard
     AP_GROUPINFO("BEHAVE", 5, AC_Avoid, _behavior, AP_AVOID_BEHAVE_DEFAULT),
@@ -62,49 +60,31 @@ AC_Avoid::AC_Avoid(const AP_AHRS& ahrs, const AC_Fence& fence, const AP_Proximit
     AP_Param::setup_object_defaults(this, var_info);
 }
 
-/**************************************************************************************************************
-*函数原型：void AC_Avoid::adjust_velocity(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt)
-*函数功能：调节速度
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void AC_Avoid::adjust_velocity(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt)
 {
     // exit immediately if disabled
-    if (_enabled == AC_AVOID_DISABLED)
-    {
+    if (_enabled == AC_AVOID_DISABLED) {
         return;
     }
 
-    //限制加速度-----limit acceleration
+    // limit acceleration
     const float accel_cmss_limited = MIN(accel_cmss, AC_AVOID_ACCEL_CMSS_MAX);
 
-    if ((_enabled & AC_AVOID_STOP_AT_FENCE) > 0)
-    {
+    if ((_enabled & AC_AVOID_STOP_AT_FENCE) > 0) {
         adjust_velocity_circle_fence(kP, accel_cmss_limited, desired_vel_cms, dt);
         adjust_velocity_polygon_fence(kP, accel_cmss_limited, desired_vel_cms, dt);
     }
 
-    if ((_enabled & AC_AVOID_STOP_AT_BEACON_FENCE) > 0)
-    {
+    if ((_enabled & AC_AVOID_STOP_AT_BEACON_FENCE) > 0) {
         adjust_velocity_beacon_fence(kP, accel_cmss_limited, desired_vel_cms, dt);
     }
 
-    if ((_enabled & AC_AVOID_USE_PROXIMITY_SENSOR) > 0 && _proximity_enabled) //主要采用这里
-    {
+    if ((_enabled & AC_AVOID_USE_PROXIMITY_SENSOR) > 0 && _proximity_enabled) {
         adjust_velocity_proximity(kP, accel_cmss_limited, desired_vel_cms, dt);
     }
 }
 
-/**************************************************************************************************************
-*函数原型：void AC_Avoid::adjust_velocity(float kP, float accel_cmss, Vector3f &desired_vel_cms, float dt)
-*函数功能：调节速度
-*修改日期：2019-2-20
-*修改作者：cihang_uav
-*备注信息：convenience function to accept Vector3f.  Only x and y are adjusted
-****************************************************************************************************************/
-
+// convenience function to accept Vector3f.  Only x and y are adjusted
 void AC_Avoid::adjust_velocity(float kP, float accel_cmss, Vector3f &desired_vel_cms, float dt)
 {
     Vector2f des_vel_xy(desired_vel_cms.x, desired_vel_cms.y);
@@ -393,14 +373,9 @@ void AC_Avoid::adjust_velocity_beacon_fence(float kP, float accel_cmss, Vector2f
     adjust_velocity_polygon(kP, accel_cmss, desired_vel_cms, boundary, num_points, true, _fence.get_margin(), dt);
 }
 
-/***********************************************************************************************************************
-*函数原型：void AC_Avoid::adjust_velocity_proximity(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt)
-*函数功能：调节速度使用近距离传感器
-*修改日期：2019-2-20
-*修改作者：cihang_uav
-*备注信息：Adjusts the desired velocity based on output from the proximity sensor
-**************************************************************************************************************************/
-
+/*
+ * Adjusts the desired velocity based on output from the proximity sensor
+ */
 void AC_Avoid::adjust_velocity_proximity(float kP, float accel_cmss, Vector2f &desired_vel_cms, float dt)
 {
     // exit immediately if proximity sensor is not present
@@ -409,43 +384,30 @@ void AC_Avoid::adjust_velocity_proximity(float kP, float accel_cmss, Vector2f &d
     }
 
     // exit immediately if no desired velocity
-    if (desired_vel_cms.is_zero())
-    {
+    if (desired_vel_cms.is_zero()) {
         return;
     }
 
     // get boundary from proximity sensor
     uint16_t num_points;
-    const Vector2f *boundary = _proximity.get_boundary_points(num_points); //获取避障边界
-    adjust_velocity_polygon(kP, accel_cmss, desired_vel_cms, boundary, num_points, false, _margin, dt); //核心
+    const Vector2f *boundary = _proximity.get_boundary_points(num_points);
+    adjust_velocity_polygon(kP, accel_cmss, desired_vel_cms, boundary, num_points, false, _margin, dt);
 }
 
-
-
-/***********************************************************************************************************************
-*函数原型：void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &desired_vel_cms,
-		const Vector2f* boundary, uint16_t num_points, bool earth_frame, float margin, float dt)
-*函数功能：调节速度按照多边形区域
-*修改日期：2019-2-20
-*修改作者：cihang_uav
-*备注信息：Adjusts the desired velocity for the polygon fence.
-**************************************************************************************************************************/
-
-void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &desired_vel_cms,
-		const Vector2f* boundary, uint16_t num_points, bool earth_frame, float margin, float dt)
+/*
+ * Adjusts the desired velocity for the polygon fence.
+ */
+void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &desired_vel_cms, const Vector2f* boundary, uint16_t num_points, bool earth_frame, float margin, float dt)
 {
     // exit if there are no points
-    if (boundary == nullptr || num_points == 0)
-    {
+    if (boundary == nullptr || num_points == 0) {
         return;
     }
 
     // do not adjust velocity if vehicle is outside the polygon fence
     Vector2f position_xy;
-    if (earth_frame)
-    {
-        if (!_ahrs.get_relative_position_NE_origin(position_xy))
-        {
+    if (earth_frame) {
+        if (!_ahrs.get_relative_position_NE_origin(position_xy)) {
             // boundary is in earth frame but we have no idea
             // where we are
             return;
@@ -463,8 +425,7 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
     Vector2f safe_vel(desired_vel_cms);
 
     // if boundary points are in body-frame, rotate velocity vector from earth frame to body-frame
-    if (!earth_frame)
-    {
+    if (!earth_frame) {
         safe_vel.x = desired_vel_cms.y * _ahrs.sin_yaw() + desired_vel_cms.x * _ahrs.cos_yaw(); // right
         safe_vel.y = desired_vel_cms.y * _ahrs.cos_yaw() - desired_vel_cms.x * _ahrs.sin_yaw(); // forward
     }
@@ -477,51 +438,42 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
     const Vector2f stopping_point_plus_margin = position_xy + safe_vel*((2.0f + margin_cm + get_stopping_distance(kP, accel_cmss, speed))/speed);
 
     uint16_t i, j;
-    for (i = 0, j = num_points-1; i < num_points; j = i++)
-    {
+    for (i = 0, j = num_points-1; i < num_points; j = i++) {
         // end points of current edge
         Vector2f start = boundary[j];
         Vector2f end = boundary[i];
-        if ((AC_Avoid::BehaviourType)_behavior.get() == BEHAVIOR_SLIDE)
-        {
+        if ((AC_Avoid::BehaviourType)_behavior.get() == BEHAVIOR_SLIDE) {
             // vector from current position to closest point on current edge
             Vector2f limit_direction = Vector2f::closest_point(position_xy, start, end) - position_xy;
             // distance to closest point
             const float limit_distance_cm = limit_direction.length();
-            if (!is_zero(limit_distance_cm))
-            {
+            if (!is_zero(limit_distance_cm)) {
                 // We are strictly inside the given edge.
                 // Adjust velocity to not violate this edge.
                 limit_direction /= limit_distance_cm;
                 limit_velocity(kP, accel_cmss, safe_vel, limit_direction, MAX(limit_distance_cm - margin_cm, 0.0f), dt);
-            } else
-            {
+            } else {
                 // We are exactly on the edge - treat this as a fence breach.
                 // i.e. do not adjust velocity.
                 return;
             }
-        } else
-        {
+        } else {
             // find intersection with line segment
             Vector2f intersection;
             if (Vector2f::segment_intersection(position_xy, stopping_point_plus_margin, start, end, intersection)) {
                 // vector from current position to point on current edge
                 Vector2f limit_direction = intersection - position_xy;
                 const float limit_distance_cm = limit_direction.length();
-                if (!is_zero(limit_distance_cm))
-                {
-                    if (limit_distance_cm <= margin_cm)
-                    {
+                if (!is_zero(limit_distance_cm)) {
+                    if (limit_distance_cm <= margin_cm) {
                         // we are within the margin so stop vehicle
                         safe_vel.zero();
-                    } else
-                    {
+                    } else {
                         // vehicle inside the given edge, adjust velocity to not violate this edge
                         limit_direction /= limit_distance_cm;
                         limit_velocity(kP, accel_cmss, safe_vel, limit_direction, MAX(limit_distance_cm - margin_cm, 0.0f), dt);
                     }
-                } else
-                {
+                } else {
                     // We are exactly on the edge - treat this as a fence breach.
                     // i.e. do not adjust velocity.
                     return;
@@ -531,11 +483,9 @@ void AC_Avoid::adjust_velocity_polygon(float kP, float accel_cmss, Vector2f &des
     }
 
     // set modified desired velocity vector
-    if (earth_frame)
-    {
+    if (earth_frame) {
         desired_vel_cms = safe_vel;
-    } else
-    {
+    } else {
         // if points were in body-frame, rotate resulting vector back to earth-frame
         desired_vel_cms.x = safe_vel.x * _ahrs.cos_yaw() - safe_vel.y * _ahrs.sin_yaw();
         desired_vel_cms.y = safe_vel.x * _ahrs.sin_yaw() + safe_vel.y * _ahrs.cos_yaw();

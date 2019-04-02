@@ -78,8 +78,6 @@ enum aux_sw_func {
     AUXSW_USER_FUNC1 =          47, // user function #1
     AUXSW_USER_FUNC2 =          48, // user function #2
     AUXSW_USER_FUNC3 =          49, // user function #3
-    AUXSW_ZIGZAG_POS_RECORD =   50,  // record zigzag a/b point
-	AUXSW_USHAPE_POS_RECORD      =  51, // simple mode
     AUXSW_SWITCH_MAX,
 };
 
@@ -115,8 +113,6 @@ enum control_mode_t {
     SMART_RTL =    21,  // SMART_RTL returns to home by retracing its steps
     FLOWHOLD  =    22,  // FLOWHOLD holds position with optical flow without rangefinder
     FOLLOW    =    23,  // follow attempts to follow another vehicle or ground station
-    ZIGZAG    =    24,  // follow attempts to follow another vehicle or ground station
-	USHAPE    =    25,  // USHAPE mode is able to fly in a ushape manner with predefined point A and point B
 };
 
 enum mode_reason_t {
@@ -139,7 +135,6 @@ enum mode_reason_t {
     MODE_REASON_THROW_COMPLETE,
     MODE_REASON_TERMINATE,
     MODE_REASON_TMODE,
-	MODE_REASON_DRUG_FAILSAFE,
 };
 
 // Tuning enumeration

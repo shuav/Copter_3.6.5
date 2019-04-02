@@ -28,27 +28,21 @@ ObjectBuffer<GCS_MAVLINK::pending_param_reply> GCS_MAVLINK::param_replies(5);
 
 bool GCS_MAVLINK::param_timer_registered;
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::queued_param_send()
-*函数功能：简单发送下一个挂起的参数，从延迟的消息处理代码调用
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：brief Send the next pending parameter, called from deferred message handling code
-****************************************************************************************************************/
-
-void GCS_MAVLINK::queued_param_send()
+/**
+ * @brief Send the next pending parameter, called from deferred message
+ * handling code
+ */
+void
+GCS_MAVLINK::queued_param_send()
 {
-    if (!initialised)
-    {
+    if (!initialised) {
         return;
     }
 
-    //如果挂起，发送一个参数异步回复---------send one parameter async reply if pending
+    // send one parameter async reply if pending
     send_parameter_reply();
 
-    if (_queued_parameter == nullptr)
-    {
+    if (_queued_parameter == nullptr) {
         return;
     }
     
@@ -67,13 +61,11 @@ void GCS_MAVLINK::queued_param_send()
 
     // when we don't have flow control we really need to keep the
     // param download very slow, or it tends to stall
-    if (!have_flow_control() && count > 5)
-    {
+    if (!have_flow_control() && count > 5) {
         count = 5;
     }
 
-    while (_queued_parameter != nullptr && count--)
-    {
+    while (_queued_parameter != nullptr && count--) {
         AP_Param      *vp;
         float value;
 
@@ -105,38 +97,26 @@ void GCS_MAVLINK::queued_param_send()
     _queued_parameter_send_time_ms = tnow;
 }
 
-
-
-/**************************************************************************************************************
-*函数原型：bool GCS_MAVLINK::have_flow_control(void)
-*函数功能：有光流控制
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：return true if a channel has flow control
-****************************************************************************************************************/
-
+/*
+  return true if a channel has flow control
+ */
 bool GCS_MAVLINK::have_flow_control(void)
 {
-    if (_port == nullptr)
-    {
+    if (_port == nullptr) {
         return false;
     }
 
-    if (_port->get_flow_control() != AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE)
-    {
+    if (_port->get_flow_control() != AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE) {
         return true;
     }
 
-    if (chan == MAVLINK_COMM_0)
-    {
+    if (chan == MAVLINK_COMM_0) {
         // assume USB console has flow control
         return hal.gpio->usb_connected();
     }
 
     return false;
 }
-
-
 
 
 /*
@@ -298,30 +278,24 @@ void GCS_MAVLINK::handle_param_set(mavlink_message_t *msg)
 // see if we should send a stream now. Called at 50Hz
 bool GCS_MAVLINK::stream_trigger(enum streams stream_num)
 {
-    if (stream_num >= NUM_STREAMS)
-    {
+    if (stream_num >= NUM_STREAMS) {
         return false;
     }
     float rate = (uint8_t)streamRates[stream_num].get();
 
     rate *= adjust_rate_for_stream_trigger(stream_num);
 
-    if (rate <= 0)
-    {
-        if (chan_is_streaming & (1U<<(chan-MAVLINK_COMM_0)))
-        {
+    if (rate <= 0) {
+        if (chan_is_streaming & (1U<<(chan-MAVLINK_COMM_0))) {
             // if currently streaming then check if all streams are disabled
             // to allow runtime detection of user disabling streaming
             bool is_streaming = false;
-            for (uint8_t i=0; i<stream_num; i++)
-            {
-                if (streamRates[stream_num] > 0)
-                {
+            for (uint8_t i=0; i<stream_num; i++) {
+                if (streamRates[stream_num] > 0) {
                     is_streaming = true;
                 }
             }
-            if (!is_streaming)
-            {
+            if (!is_streaming) {
                 // all streams have been turned off, clear the bit flag
                 chan_is_streaming &= ~(1U<<(chan-MAVLINK_COMM_0));
             }
@@ -377,8 +351,7 @@ void GCS::send_parameter_value(const char *param_name, ap_var_type param_type, f
  */
 void GCS_MAVLINK::send_queued_parameters(void)
 {
-    if (!param_timer_registered)
-    {
+    if (!param_timer_registered) {
         param_timer_registered = true;
         hal.scheduler->register_io_process(FUNCTOR_BIND_MEMBER(&GCS_MAVLINK::param_io_timer, void));
     }
@@ -445,21 +418,14 @@ void GCS_MAVLINK::param_io_timer(void)
     param_replies.push(reply);
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_parameter_reply(void)
-*函数功能：发送延迟参数
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：send a reply to a PARAM_REQUEST_READ
-****************************************************************************************************************/
-
+/*
+  send a reply to a PARAM_REQUEST_READ
+ */
 void GCS_MAVLINK::send_parameter_reply(void)
 {
     struct pending_param_reply reply;
     
-    if (!param_replies.pop(reply))
-    {
+    if (!param_replies.pop(reply)) {
         // nothing to do
         return;
     }
@@ -473,14 +439,6 @@ void GCS_MAVLINK::send_parameter_reply(void)
         reply.param_index);
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_common_param_message(mavlink_message_t *msg)
-*函数功能：发送共同参数信息
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::handle_common_param_message(mavlink_message_t *msg)
 {
     switch (msg->msgid) {
@@ -495,7 +453,3 @@ void GCS_MAVLINK::handle_common_param_message(mavlink_message_t *msg)
         break;
     }
 }
-
-/**************************************************************************************************************
-*                                           File-END
-***************************************************************************************************************/

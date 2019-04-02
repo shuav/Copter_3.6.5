@@ -103,8 +103,3 @@ void Copter::set_motor_emergency_stop(bool b)
         Log_Write_Event(DATA_MOTORS_EMERGENCY_STOP_CLEARED);
     }
 }
-void Copter::set_failsafe_battery(bool b)
-{
-    failsafe.battery = b;
-    AP_Notify::flags.failsafe_battery = b;
-}

@@ -165,65 +165,9 @@ Compass::_accept_calibration(uint8_t i)
         return false;
     }
 }
-/***********************************************************************************************************************
-*函数原型：bool Compass::accept_calibration_mask(uint8_t mask, bool force)
-*函数功能：接收罗盘校准
-*修改日期：2018-12-28
-*修改作者：cihang_uav
-*备注信息：_scheduled_update - updates _red, _green, _blue according to notify flags
-*************************************************************************************************************************/
-bool Compass::accept_calibration_mask(uint8_t mask, bool force)
-{
-    bool success = true;
-    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++)
-    {
-        if ((1<<i) & mask)
-        {
-            if (!_accept_calibration_use(i, force))
-            {
-                success = false;
-            }
-            _calibrator[i].clear();
-        }
-    }
 
-    return success;
-}
-
-bool Compass::_accept_calibration_use(uint8_t i, bool force)
-{
-    CompassCalibrator& cal = _calibrator[i];
-    uint8_t cal_status = cal.get_status();
-
-    if (_cal_saved[i] || cal_status == COMPASS_CAL_NOT_STARTED) {
-        return true;
-    } else if (cal_status == COMPASS_CAL_SUCCESS  || force?(cal_status != COMPASS_CAL_FAILED):(cal_status == COMPASS_CAL_SUCCESS)) {
-        _cal_complete_requires_reboot = true;
-        _cal_saved[i] = true;
-
-        Vector3f ofs, diag, offdiag;
-        cal.get_calibration(ofs, diag, offdiag);
-
-        set_and_save_offsets(i, ofs);
-        set_and_save_diagonals(i,diag);
-        set_and_save_offdiagonals(i,offdiag);
-
-        if (_state[i].external && _rotate_auto >= 2)
-        {
-            _state[i].orientation.set_and_save_ifchanged(cal.get_orientation());
-        }
-
-        if (!is_calibrating())
-        {
-            AP_Notify::events.compass_cal_saved = 1;
-        }
-        return true;
-    } else
-    {
-        return false;
-    }
-}
-bool Compass::_accept_calibration_mask(uint8_t mask)
+bool
+Compass::_accept_calibration_mask(uint8_t mask)
 {
     bool success = true;
     for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
@@ -238,22 +182,14 @@ bool Compass::_accept_calibration_mask(uint8_t mask)
     return success;
 }
 
-/**************************************************************************************************************
-*函数原型：void Compass::send_mag_cal_progress(mavlink_channel_t chan)
-*函数功能：发送罗盘校准进程
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-void Compass::send_mag_cal_progress(mavlink_channel_t chan)
+void
+Compass::send_mag_cal_progress(mavlink_channel_t chan)
 {
     uint8_t cal_mask = _get_cal_mask();
 
-    for (uint8_t compass_id=0; compass_id<COMPASS_MAX_INSTANCES; compass_id++)
-    {
+    for (uint8_t compass_id=0; compass_id<COMPASS_MAX_INSTANCES; compass_id++) {
         // ensure we don't try to send with no space available
-        if (!HAVE_PAYLOAD_SPACE(chan, MAG_CAL_PROGRESS))
-        {
+        if (!HAVE_PAYLOAD_SPACE(chan, MAG_CAL_PROGRESS)) {
             return;
         }
 
@@ -262,8 +198,7 @@ void Compass::send_mag_cal_progress(mavlink_channel_t chan)
 
         if (cal_status == COMPASS_CAL_WAITING_TO_START  ||
             cal_status == COMPASS_CAL_RUNNING_STEP_ONE ||
-            cal_status == COMPASS_CAL_RUNNING_STEP_TWO)
-        {
+            cal_status == COMPASS_CAL_RUNNING_STEP_TWO) {
             uint8_t completion_pct = calibrator.get_completion_percent();
             auto& completion_mask = calibrator.get_completion_mask();
             Vector3f direction(0.0f,0.0f,0.0f);
@@ -279,31 +214,20 @@ void Compass::send_mag_cal_progress(mavlink_channel_t chan)
     }
 }
 
-/**************************************************************************************************************
-*函数原型：void Compass::send_mag_cal_report(mavlink_channel_t chan)
-*函数功能：发送罗盘校准报告
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-
 void Compass::send_mag_cal_report(mavlink_channel_t chan)
 {
     uint8_t cal_mask = _get_cal_mask();
 
-    for (uint8_t compass_id=0; compass_id<COMPASS_MAX_INSTANCES; compass_id++)
-    {
+    for (uint8_t compass_id=0; compass_id<COMPASS_MAX_INSTANCES; compass_id++) {
         // ensure we don't try to send with no space available
-        if (!HAVE_PAYLOAD_SPACE(chan, MAG_CAL_REPORT))
-        {
+        if (!HAVE_PAYLOAD_SPACE(chan, MAG_CAL_REPORT)) {
             return;
         }
 
         uint8_t cal_status = _calibrator[compass_id].get_status();
         if (cal_status == COMPASS_CAL_SUCCESS ||
             cal_status == COMPASS_CAL_FAILED ||
-            cal_status == COMPASS_CAL_BAD_ORIENTATION)
-        {
+            cal_status == COMPASS_CAL_BAD_ORIENTATION) {
             float fitness = _calibrator[compass_id].get_fitness();
             Vector3f ofs, diag, offdiag;
             _calibrator[compass_id].get_calibration(ofs, diag, offdiag);
@@ -325,20 +249,11 @@ void Compass::send_mag_cal_report(mavlink_channel_t chan)
     }
 }
 
-/**************************************************************************************************************
-*函数原型：bool Compass::is_calibrating() const
-*函数功能：罗盘正在校准
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-
-bool Compass::is_calibrating() const
+bool
+Compass::is_calibrating() const
 {
-    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++)
-    {
-        switch(_calibrator[i].get_status())
-        {
+    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        switch(_calibrator[i].get_status()) {
             case COMPASS_CAL_NOT_STARTED:
             case COMPASS_CAL_SUCCESS:
             case COMPASS_CAL_FAILED:
@@ -351,20 +266,12 @@ bool Compass::is_calibrating() const
     return false;
 }
 
-/**************************************************************************************************************
-*函数原型：uint8_t Compass::_get_cal_mask() const
-*函数功能：获取罗盘校准标志
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-uint8_t Compass::_get_cal_mask() const
+uint8_t
+Compass::_get_cal_mask() const
 {
     uint8_t cal_mask = 0;
-    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++)
-    {
-        if (_calibrator[i].get_status() != COMPASS_CAL_NOT_STARTED)
-        {
+    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if (_calibrator[i].get_status() != COMPASS_CAL_NOT_STARTED) {
             cal_mask |= 1 << i;
         }
     }

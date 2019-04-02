@@ -10,13 +10,6 @@ AP_Baro_Backend::AP_Baro_Backend(AP_Baro &baro) :
     _sem = hal.util->new_semaphore();    
 }
 
-/**************************************************************************************************************
-*函数原型：void AP_Baro_Backend::update_healthy_flag(uint8_t instance)
-*函数功能：更新气压计
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：更新气压计标志位
-****************************************************************************************************************/
 void AP_Baro_Backend::update_healthy_flag(uint8_t instance)
 {
     if (instance >= _frontend._num_sensors) {
@@ -37,14 +30,6 @@ void AP_Baro_Backend::update_healthy_flag(uint8_t instance)
     _sem->give();
 }
 
-
-/**************************************************************************************************************
-*函数原型：void AP_Baro_Backend::backend_update(uint8_t instance)
-*函数功能：更新背部传感器
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：call update on all drivers
-****************************************************************************************************************/
 void AP_Baro_Backend::backend_update(uint8_t instance)
 {
     update();
@@ -52,25 +37,18 @@ void AP_Baro_Backend::backend_update(uint8_t instance)
 }
 
 
-/**************************************************************************************************************
-*函数原型：void AP_Baro_Backend::_copy_to_frontend(uint8_t instance, float pressure, float temperature)
-*函数功能：更新背部传感器
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：copy latest data to the frontend from a backend
-****************************************************************************************************************/
-
+/*
+  copy latest data to the frontend from a backend
+ */
 void AP_Baro_Backend::_copy_to_frontend(uint8_t instance, float pressure, float temperature)
 {
-    if (instance >= _frontend._num_sensors)
-    {
+    if (instance >= _frontend._num_sensors) {
         return;
     }
     uint32_t now = AP_HAL::millis();
 
     // check for changes in data values
-    if (!is_equal(_frontend.sensors[instance].pressure, pressure) || !is_equal(_frontend.sensors[instance].temperature, temperature))
-    {
+    if (!is_equal(_frontend.sensors[instance].pressure, pressure) || !is_equal(_frontend.sensors[instance].temperature, temperature)) {
         _frontend.sensors[instance].last_change_ms = now;
     }
 

@@ -329,9 +329,7 @@ public:
     }
 
     uint8_t get_filter_range() const { return uint8_t(_filter_range.get()); }
-    // add by weihli
-    bool accept_calibration_mask(uint8_t mask, bool force=false);
-    bool _accept_calibration_use(uint8_t i, bool force);
+
 private:
     static Compass *_singleton;
     /// Register a new compas driver, allocating an instance number

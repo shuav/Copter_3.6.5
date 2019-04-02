@@ -17,36 +17,6 @@ static uint8_t motor_test_count;            // number of motors to test
 static uint8_t motor_test_throttle_type;    // motor throttle type (0=throttle percentage, 1=PWM, 2=pilot throttle channel pass-through)
 static uint16_t motor_test_throttle_value;  // throttle to be sent to motor, value depends upon it's type
 
-
-
-// motor_armed_spin_order -- after armed, motor spin in order
-void Copter::motor_armed_spin_order()
-{
-	// 如果未解锁或所有电机都转动起来了 则直接返回
-	if (!motors->armed() || ap.motor_spin_all || motor_spin_seq >= motor_num)
-	{
-		return;
-	}
-	motor_spin_loop_count++;
-	if(motor_spin_loop_count != 200)
-	{
-		return;
-	}
-	motors->set_motor_enabled(motor_spin_seq, true);
-	motor_spin_seq++;
-	motor_spin_loop_count = 0;
-
-	if(motor_spin_seq == motor_num)
-	{
-
-		ap.motor_spin_all = true;
-		motor_spin_seq = 0;
-	}
-
-}
-
-
-
 // motor_test_output - checks for timeout and sends updates to motors objects
 void Copter::motor_test_output()
 {

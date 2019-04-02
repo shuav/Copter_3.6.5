@@ -21,7 +21,7 @@
 #include <AP_SerialManager/AP_SerialManager.h>
 
 // Maximum number of range finder instances available on this platform
-#define RANGEFINDER_MAX_INSTANCES 4
+#define RANGEFINDER_MAX_INSTANCES 2
 #define RANGEFINDER_GROUND_CLEARANCE_CM_DEFAULT 10
 #define RANGEFINDER_PREARM_ALT_MAX_CM           200
 #define RANGEFINDER_PREARM_REQUIRED_CHANGE_CM   50
@@ -63,10 +63,6 @@ public:
         RangeFinder_TYPE_BenewakeTF02 = 19,
         RangeFinder_TYPE_BenewakeTFmini = 20,
         RangeFinder_TYPE_PLI2CV3HP = 21,
-		RangeFinder_TYPE_NRA24 = 22,    //添加NRA24
-		RangeFinder_TYPE_HPS166U = 23,   //添加HPS166
-		RangeFinder_TYPE_HPS167UL = 24 ,  //添加HPS167
-		RangeFinder_TYPE_HL6_M30 = 25  , //添加HPS167
     };
 
     enum RangeFinder_Function {

@@ -198,7 +198,7 @@
 #endif
 
 #ifndef HAL_HAVE_IMU_HEATER
-#define HAL_HAVE_IMU_HEATER 1
+#define HAL_HAVE_IMU_HEATER 0
 #endif
 
 #ifndef HAL_COMPASS_HMC5843_I2C_ADDR

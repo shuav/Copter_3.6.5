@@ -154,17 +154,7 @@ Copter::Mode *Copter::mode_from_mode_num(const uint8_t mode)
             ret = &mode_follow;
             break;
 #endif
-//添加AB点模式
-#if MODE_ZIGZAG_ENABLED == ENABLED
-		case ZIGZAG:
-			ret = &mode_zigzag;
-			break;
-#endif
-#if MODE_USHAPE_ENABLED == ENABLED
-		case USHAPE:
-			ret = &mode_ushape;
-			break;
-#endif
+
         default:
             break;
     }
@@ -181,8 +171,7 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
 {
 
     // return immediately if we are already in the desired mode
-    if (mode == control_mode)
-    {
+    if (mode == control_mode) {
         control_mode_reason = reason;
         return true;
     }
@@ -274,10 +263,8 @@ void Copter::exit_mode(Copter::Mode *&old_flightmode,
 
     // stop mission when we leave auto mode
 #if MODE_AUTO_ENABLED == ENABLED
-    if (old_flightmode == &mode_auto)
-    {
-        if (mission.state() == AP_Mission::MISSION_RUNNING)
-        {
+    if (old_flightmode == &mode_auto) {
+        if (mission.state() == AP_Mission::MISSION_RUNNING) {
             mission.stop();
         }
 #if MOUNT == ENABLED
@@ -285,31 +272,6 @@ void Copter::exit_mode(Copter::Mode *&old_flightmode,
 #endif  // MOUNT == ENABLED
     }
 #endif
-else if(old_flightmode == &mode_zigzag)
-{
-       	mode_zigzag.zigzag_stop();
-           mode_zigzag.zigzag_save();
-
-
-       	if(motors->armed())
-       	{
-       		mode_zigzag.zigzag_waypoint_state.flag = mode_zigzag.zigzag_waypoint_state.flag << 1;
-       	}
-       }
-       else if(old_flightmode == &mode_ushape)
-       {
-       	mode_ushape.ushape_stop();
-       	mode_ushape.ushape_save();
-
-
-       	if(motors->armed())
-       	{
-       		mode_ushape.ushape_waypoint_state.flag = mode_ushape.ushape_waypoint_state.flag << 1;
-       	}
-}
-
-
-
 
     // smooth throttle transition when switching from manual to automatic flight modes
     if (old_flightmode->has_manual_throttle() && !new_flightmode->has_manual_throttle() && motors->armed() && !ap.land_complete) {
@@ -360,22 +322,15 @@ void Copter::Mode::update_navigation()
     run_autopilot();
 }
 
-/********************************************************************************************************************************************
-*函数原型：void Copter::Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit) const
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：get_pilot_desired_angle - transform pilot's roll or pitch input into a desired lean angle
-         returns desired angle in centi-degrees
-**********************************************************************************************************************************************/
-
+// get_pilot_desired_angle - transform pilot's roll or pitch input into a desired lean angle
+// returns desired angle in centi-degrees
 void Copter::Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit) const
 {
-    //抓取目标横滚角，目标俯仰角输入--------fetch roll and pitch inputs
+    // fetch roll and pitch inputs
     roll_out = channel_roll->get_control_in();
     pitch_out = channel_pitch->get_control_in();
 
-	//限制最大倾斜角度-------------------limit max lean angle
+	// limit max lean angle
     angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
 
     // scale roll and pitch inputs to ANGLE_MAX parameter range
@@ -385,8 +340,7 @@ void Copter::Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_o
 
     // do circular limit
     float total_in = norm(pitch_out, roll_out);
-    if (total_in > angle_limit)
-    {
+    if (total_in > angle_limit) {
         float ratio = angle_limit / total_in;
         roll_out *= ratio;
         pitch_out *= ratio;
@@ -398,45 +352,24 @@ void Copter::Mode::get_pilot_desired_lean_angles(float &roll_out, float &pitch_o
     // roll_out and pitch_out are returned
 }
 
-
-/********************************************************************************************************************************************
-*函数原型：bool Copter::Mode::_TakeOff::triggered(const float target_climb_rate) const
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：get_pilot_desired_angle - transform pilot's roll or pitch input into a desired lean angle
-         returns desired angle in centi-degrees
-**********************************************************************************************************************************************/
 bool Copter::Mode::_TakeOff::triggered(const float target_climb_rate) const
 {
-    if (!copter.ap.land_complete)
-    {
+    if (!copter.ap.land_complete) {
         // can't take off if we're already flying
         return false;
     }
-    if (target_climb_rate <= 0.0f)
-    {
+    if (target_climb_rate <= 0.0f) {
         // can't takeoff unless we want to go up...
         return false;
     }
 #if FRAME_CONFIG == HELI_FRAME
-    if (!copter.motors->rotor_runup_complete())
-    {
+    if (!copter.motors->rotor_runup_complete()) {
         // hold heli on the ground until rotor speed runup has finished
         return false;
     }
 #endif
     return true;
 }
-
-/********************************************************************************************************************************************
-*函数原型：bool Copter::Mode::_TakeOff::triggered(const float target_climb_rate) const
-*函数功能：任务列表
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：get_pilot_desired_angle - transform pilot's roll or pitch input into a desired lean angle
-         returns desired angle in centi-degrees
-**********************************************************************************************************************************************/
 
 void Copter::Mode::zero_throttle_and_relax_ac()
 {
@@ -637,37 +570,15 @@ float Copter::Mode::get_non_takeoff_throttle()
 {
     return copter.get_non_takeoff_throttle();
 }
-/**************************************************************************************************************
-*函数原型：void Copter::Mode::update_simple_mode(void)
-*函数功能：更新简单模式
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-void Copter::Mode::update_simple_mode(void)
-{
+
+void Copter::Mode::update_simple_mode(void) {
     copter.update_simple_mode();
 }
 
-/**************************************************************************************************************
-*函数原型：bool Copter::Mode::set_mode(control_mode_t mode, mode_reason_t reason)
-*函数功能：设置模式
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 bool Copter::Mode::set_mode(control_mode_t mode, mode_reason_t reason)
 {
     return copter.set_mode(mode, reason);
 }
-
-/**************************************************************************************************************
-*函数原型：void Copter::Mode::set_land_complete(bool b)
-*函数功能：精准降落
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 
 void Copter::Mode::set_land_complete(bool b)
 {

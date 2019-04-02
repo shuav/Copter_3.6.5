@@ -94,34 +94,7 @@ bool Copter::set_home(const Location& loc, bool lock)
         }
 #endif
     }
-    uint64_t gps_timestamp = gps.time_epoch_usec();
-  	  int32_t cur_timestamp_min = gps_timestamp / 6.0e7f;
 
-  	  if(cur_timestamp_min - g.Zigzag_time > 10)
-  	  {
-  		// clear AB/Break Point
-
-  		mode_zigzag.zigzag_clear_record();
-  	  }
-  	  else
-  	  {
-
-       mode_zigzag.zigzag_load();
-
-  	  }
-
-  	  if(cur_timestamp_min - g.Ushape_time > 10)
-  	  {
-  		// clear AB/Break Point
-
-  		mode_ushape.ushape_clear_record();
-  	  }
-  	  else
-  	  {
-
-  		mode_ushape.ushape_load();
-
-  	  }
     // lock home position
     if (lock) {
         ahrs.lock_home();

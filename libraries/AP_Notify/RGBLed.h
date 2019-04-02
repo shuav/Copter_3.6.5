@@ -64,8 +64,6 @@ protected:
         uint8_t rate_hz;
         uint32_t start_ms;
     } _led_override;
-    uint8_t ab_point_step;
-    uint8_t ab_point_mode_step;
     
 private:
     virtual void update_colours();

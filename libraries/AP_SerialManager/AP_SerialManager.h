@@ -73,22 +73,15 @@
 #define AP_SERIALMANAGER_SBUS1_BUFSIZE_RX     16
 #define AP_SERIALMANAGER_SBUS1_BUFSIZE_TX     32
 
-#define AP_SERIALMANAGER6_MAVLINK_BAUD          19200
-#define AP_SERIALMANAGER_ULANDING_BAUD           115200
-#define AP_SERIALMANAGER_ULANDING_BUFSIZE_RX     128
-#define AP_SERIALMANAGER_ULANDING_BUFSIZE_TX     128
-
-class AP_SerialManager
-{
+class AP_SerialManager {
 public:
     AP_SerialManager();
 
-    /*不允许复制------ Do not allow copies */
+    /* Do not allow copies */
     AP_SerialManager(const AP_SerialManager &other) = delete;
     AP_SerialManager &operator=(const AP_SerialManager&) = delete;
 
-    enum SerialProtocol            //串口协议函数
-	{
+    enum SerialProtocol {
         SerialProtocol_None = -1,
         SerialProtocol_Console = 0, // unused
         SerialProtocol_MAVLink = 1,
@@ -109,28 +102,22 @@ public:
         SerialProtocol_ESCTelemetry = 16,
         SerialProtocol_Devo_Telem = 17,
         SerialProtocol_OpticalFlow = 18,
-        SerialProtocol_NRA24 = 19,					// NRA24
-        SerialProtocol_MQTT = 20	,				// MQTT
-		SerialProtocol_HPS166U = 21	,				// HPS166u
-		SerialProtocol_HPS167UL = 22,					// HPS167ul
-		SerialProtocol_HL6_M30=23,
     };
 
-    //获取实例函数------get singleton instance
-    static AP_SerialManager *get_instance(void)
-    {
+    // get singleton instance
+    static AP_SerialManager *get_instance(void) {
         return _instance;
     }
     
-    //控制台-初始化控制台--------init_console - initialise console at default baud rate
+    // init_console - initialise console at default baud rate
     void init_console();
 
-    //初始化串行端口-------------init - initialise serial ports
+    // init - initialise serial ports
     void init();
 
-    //找到_串行搜索可用的串口，可以给定的协议----------find_serial - searches available serial ports that allows the given protocol
-    //如果搜索第一个实例，则实例应为零；如果搜索第二个实例，则实例应为1等。--instance should be zero if searching for the first instance, 1 for the second, etc
-    //returns uart on success, nullptr if a serial port cannot be found
+    // find_serial - searches available serial ports that allows the given protocol
+    //  instance should be zero if searching for the first instance, 1 for the second, etc
+    //  returns uart on success, nullptr if a serial port cannot be found
     AP_HAL::UARTDriver *find_serial(enum SerialProtocol protocol, uint8_t instance) const;
 
     // find_baudrate - searches available serial ports for the first instance that allows the given protocol
@@ -157,12 +144,11 @@ private:
     static AP_SerialManager *_instance;
     
     // array of uart info
-    struct UARTState
-    {
+    struct UARTState {
         AP_Int8 protocol;
         AP_Int32 baud;
         AP_HAL::UARTDriver* uart;
-    } state[SERIALMANAGER_NUM_PORTS];  //最多支持7个串口
+    } state[SERIALMANAGER_NUM_PORTS];
 
     // search through managed serial connections looking for the
     // instance-nth UART which is running protocol protocol
@@ -175,9 +161,6 @@ private:
     bool protocol_match(enum SerialProtocol protocol1, enum SerialProtocol protocol2) const;
 };
 
-namespace AP
-{
+namespace AP {
     AP_SerialManager &serialmanager();
 };
-
-

@@ -49,7 +49,7 @@
 #define MAGNETOMETER ENABLED
 
 #ifndef ARMING_DELAY_SEC
-    # define ARMING_DELAY_SEC 3.0f
+    # define ARMING_DELAY_SEC 2.0f
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -154,12 +154,12 @@
 
 // Radio failsafe while using RC_override
 #ifndef FS_RADIO_RC_OVERRIDE_TIMEOUT_MS
- # define FS_RADIO_RC_OVERRIDE_TIMEOUT_MS  2000    // RC Radio failsafe triggers after 1 second while using RC_override from ground station
+ # define FS_RADIO_RC_OVERRIDE_TIMEOUT_MS  1000    // RC Radio failsafe triggers after 1 second while using RC_override from ground station
 #endif
 
 // Radio failsafe
 #ifndef FS_RADIO_TIMEOUT_MS
- #define FS_RADIO_TIMEOUT_MS            2000     // RC Radio Failsafe triggers after 500 miliseconds with No RC Input
+ #define FS_RADIO_TIMEOUT_MS            500     // RC Radio Failsafe triggers after 500 miliseconds with No RC Input
 #endif
 
 // missing terrain data failsafe
@@ -301,16 +301,6 @@
 # define MODE_FOLLOW_ENABLED !HAL_MINIMIZE_FEATURES
 #endif
 
-//添加模式
-#ifndef MODE_ZIGZAG_ENABLED
-#define MODE_ZIGZAG_ENABLED       ENABLED
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// Ushape- allow vehicle to fly in a zigzag manner with predefined point A B
-#ifndef MODE_USHAPE_ENABLED
-# define MODE_USHAPE_ENABLED !HAL_MINIMIZE_FEATURES
-#endif
 //////////////////////////////////////////////////////////////////////////////
 // Guided mode - control vehicle's position or angles from GCS
 #ifndef MODE_GUIDED_ENABLED

@@ -23,32 +23,30 @@ class AP_Param;
 class AP_Param_Helper;
 #endif
 
-class AP_HAL::HAL
-{
+class AP_HAL::HAL {
 public:
-	//构造函数初始化
-    HAL(AP_HAL::UARTDriver* _uartA, // console-------usb
-        AP_HAL::UARTDriver* _uartB, // 1st GPS-------uart1
-        AP_HAL::UARTDriver* _uartC, // telem1--------uart2
-        AP_HAL::UARTDriver* _uartD, // telem2--------uart3
-        AP_HAL::UARTDriver* _uartE, // 2nd GPS-------uart4
-        AP_HAL::UARTDriver* _uartF, // extra1--------uart6
-        AP_HAL::UARTDriver* _uartG, // extra2--------uart7
-        AP_HAL::I2CDeviceManager* _i2c_mgr,   //i2c信号
-        AP_HAL::SPIDeviceManager* _spi,       //spi信号
-        AP_HAL::AnalogIn*   _analogin,        //模拟信号输入
-        AP_HAL::Storage*    _storage,         //存储
-        AP_HAL::UARTDriver* _console,         //终端
-        AP_HAL::GPIO*       _gpio,            //gpio
-        AP_HAL::RCInput*    _rcin,            //rc输入
-        AP_HAL::RCOutput*   _rcout,           //rc输出
-        AP_HAL::Scheduler*  _scheduler,       //任务调动
-        AP_HAL::Util*       _util,            //公用函数
-        AP_HAL::OpticalFlow *_opticalflow,    //光流函数
+    HAL(AP_HAL::UARTDriver* _uartA, // console
+        AP_HAL::UARTDriver* _uartB, // 1st GPS
+        AP_HAL::UARTDriver* _uartC, // telem1
+        AP_HAL::UARTDriver* _uartD, // telem2
+        AP_HAL::UARTDriver* _uartE, // 2nd GPS
+        AP_HAL::UARTDriver* _uartF, // extra1
+        AP_HAL::UARTDriver* _uartG, // extra2
+        AP_HAL::I2CDeviceManager* _i2c_mgr,
+        AP_HAL::SPIDeviceManager* _spi,
+        AP_HAL::AnalogIn*   _analogin,
+        AP_HAL::Storage*    _storage,
+        AP_HAL::UARTDriver* _console,
+        AP_HAL::GPIO*       _gpio,
+        AP_HAL::RCInput*    _rcin,
+        AP_HAL::RCOutput*   _rcout,
+        AP_HAL::Scheduler*  _scheduler,
+        AP_HAL::Util*       _util,
+        AP_HAL::OpticalFlow *_opticalflow,
 #if HAL_WITH_UAVCAN
         AP_HAL::CANManager* _can_mgr[MAX_NUMBER_OF_CAN_DRIVERS])
 #else
-        AP_HAL::CANManager** _can_mgr)       //can总线
+        AP_HAL::CANManager** _can_mgr)
 #endif
         :
         uartA(_uartA),
@@ -71,12 +69,10 @@ public:
         opticalflow(_opticalflow)
     {
 #if HAL_WITH_UAVCAN
-        if (_can_mgr == nullptr)
-        {
+        if (_can_mgr == nullptr) {
             for (uint8_t i = 0; i < MAX_NUMBER_OF_CAN_DRIVERS; i++)
                 can_mgr[i] = nullptr;
-        } else
-        {
+        } else {
             for (uint8_t i = 0; i < MAX_NUMBER_OF_CAN_DRIVERS; i++)
                 can_mgr[i] = _can_mgr[i];
         }
@@ -84,16 +80,13 @@ public:
 
         AP_HAL::init();
     }
-    //类中定义结构体
-    struct Callbacks
-	{
+
+    struct Callbacks {
         virtual void setup() = 0;
         virtual void loop() = 0;
     };
 
-    //回调构造函数
-    struct FunCallbacks : public Callbacks
-    {
+    struct FunCallbacks : public Callbacks {
         FunCallbacks(void (*setup_fun)(void), void (*loop_fun)(void));
 
         void setup() override { _setup(); }
@@ -103,11 +96,11 @@ public:
         void (*_setup)(void);
         void (*_loop)(void);
     };
-    //纯虚函数
+
     virtual void run(int argc, char * const argv[], Callbacks* callbacks) const = 0;
 
-    AP_HAL::UARTDriver* uartA;  //定义指针对象
-    AP_HAL::UARTDriver* uartB;  //定义指针对象
+    AP_HAL::UARTDriver* uartA;
+    AP_HAL::UARTDriver* uartB;
     AP_HAL::UARTDriver* uartC;
     AP_HAL::UARTDriver* uartD;
     AP_HAL::UARTDriver* uartE;

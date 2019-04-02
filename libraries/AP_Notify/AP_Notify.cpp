@@ -33,8 +33,6 @@
 #include "UAVCAN_RGB_LED.h"
 #include <stdio.h>
 #include "AP_BoardLED2.h"
-#include "Ltr_PWMLed.h"
-
 
 extern const AP_HAL::HAL& hal;
 
@@ -44,12 +42,10 @@ AP_Notify *AP_Notify::_instance;
 
 #define TOSHIBA_LED_I2C_BUS_INTERNAL    0
 #define TOSHIBA_LED_I2C_BUS_EXTERNAL    1
-#define TOSHIBA_LED_I2C2_BUS_EXTERNAL   2
-#define TOSHIBA_LED_I2C4_BUS_EXTERNAL   3
+
 // all I2C_LEDS
 #define I2C_LEDS (Notify_LED_ToshibaLED_I2C_Internal | Notify_LED_ToshibaLED_I2C_External | \
-                  Notify_LED_NCP5623_I2C_Internal | Notify_LED_NCP5623_I2C_External|Notify_LED_CIHANG_I2C_Internal|Notify_LED_CIHANG_PWM_Internal)
-
+                  Notify_LED_NCP5623_I2C_Internal | Notify_LED_NCP5623_I2C_External)
 
 #ifndef BUILD_DEFAULT_LED_TYPE
 // PX4 boards
@@ -246,16 +242,6 @@ void AP_Notify::add_backends(void)
             case Notify_LED_ToshibaLED_I2C_External:
                 ADD_BACKEND(new ToshibaLED_I2C(TOSHIBA_LED_I2C_BUS_EXTERNAL));
                 break;
-
-			//注意这里先换成IIC2
-			case Notify_LED_CIHANG_I2C_Internal: //256
-//				ADD_BACKEND(new ToshibaLED_I2C(TOSHIBA_LED_I2C2_BUS_EXTERNAL)); //0x03
-				ADD_BACKEND(new ToshibaLED_I2C(TOSHIBA_LED_I2C4_BUS_EXTERNAL)); //0x03
-				break;
-			case Notify_LED_CIHANG_PWM_Internal:
-				ADD_BACKEND(new Ltr_PWMLed()); // add pwm_led
-				break;
-
 #if !HAL_MINIMIZE_FEATURES
             case Notify_LED_NCP5623_I2C_External:
                 FOREACH_I2C_EXTERNAL(b) {
@@ -346,10 +332,8 @@ void AP_Notify::init(bool dummy)
 // main update function, called at 50Hz
 void AP_Notify::update(void)
 {
-    for (uint8_t i = 0; i < _num_devices; i++)
-    {
-        if (_devices[i] != nullptr)
-        {
+    for (uint8_t i = 0; i < _num_devices; i++) {
+        if (_devices[i] != nullptr) {
             _devices[i]->update();
         }
     }

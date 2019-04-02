@@ -56,17 +56,10 @@ GCS_MAVLINK::GCS_MAVLINK()
     AP_Param::setup_object_defaults(this, var_info);
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
-*函数功能：Mavlink协议初始化
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-void GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
+void
+GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
 {
-    if (!valid_channel(mav_chan))
-    {
+    if (!valid_channel(mav_chan)) {
         return;
     }
 
@@ -85,15 +78,12 @@ void GCS_MAVLINK::init(AP_HAL::UARTDriver *port, mavlink_channel_t mav_chan)
     initialised = true;
 }
 
-/******************************************************************************************************************************************
-*函数原型：void GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialManager::SerialProtocol protocol, uint8_t instance)
-*函数功能：数据初始化
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：setup a UART, handling begin() and init()
-********************************************************************************************************************************************/
 
-void GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialManager::SerialProtocol protocol, uint8_t instance)
+/*
+  setup a UART, handling begin() and init()
+ */
+void
+GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialManager::SerialProtocol protocol, uint8_t instance)
 {
     serialmanager_p = &serial_manager;
 
@@ -101,8 +91,7 @@ void GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialMa
     
     AP_HAL::UARTDriver *uart;
     uart = serial_manager.find_serial(protocol, instance);
-    if (uart == nullptr)
-    {
+    if (uart == nullptr) {
         // return immediately if not found
         return;
     }
@@ -125,8 +114,7 @@ void GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialMa
     uart->begin(115200);
     AP_HAL::UARTDriver::flow_control old_flow_control = uart->get_flow_control();
     uart->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);
-    for (uint8_t i=0; i<3; i++)
-    {
+    for (uint8_t i=0; i<3; i++) {
         hal.scheduler->delay(1);
         uart->write(0x30);
         uart->write(0x20);
@@ -163,8 +151,7 @@ void GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialMa
         status->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
     }
 
-    if (chan == MAVLINK_COMM_0)
-    {
+    if (chan == MAVLINK_COMM_0) {
         // Always start with MAVLink1 on first port for now, to allow for recovery
         // after experiments with MAVLink2
         status->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
@@ -172,17 +159,12 @@ void GCS_MAVLINK::setup_uart(const AP_SerialManager& serial_manager, AP_SerialMa
 }
 
 
-
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::queued_waypoint_send()
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：brief Send the next pending waypoint, called from deferred message handling code
-****************************************************************************************************************/
-
-void GCS_MAVLINK::queued_waypoint_send()
+/**
+ * @brief Send the next pending waypoint, called from deferred message
+ * handling code
+ */
+void
+GCS_MAVLINK::queued_waypoint_send()
 {
     if (initialised &&
         waypoint_receiving &&
@@ -195,26 +177,14 @@ void GCS_MAVLINK::queued_waypoint_send()
             MAV_MISSION_TYPE_MISSION);
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_meminfo(void)
-*函数功能：发送内存信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_meminfo(void)
 {
     unsigned __brkval = 0;
     uint32_t memory = hal.util->available_memory();
-    mavlink_msg_meminfo_send(chan, __brkval, MIN(memory, 0xFFFFU), memory); //发送内存信息
+    mavlink_msg_meminfo_send(chan, __brkval, MIN(memory, 0xFFFFU), memory);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 // report power supply status
 void GCS_MAVLINK::send_power_status(void)
 {
@@ -223,13 +193,7 @@ void GCS_MAVLINK::send_power_status(void)
                                   hal.analogin->servorail_voltage() * 1000,
                                   hal.analogin->power_status_flags());
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_battery_status(const AP_BattMonitor &battery,const uint8_t instance) const
-*函数功能：发送电池电压状态
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_battery_status(const AP_BattMonitor &battery,
                                       const uint8_t instance) const
 {
@@ -253,13 +217,6 @@ void GCS_MAVLINK::send_battery_status(const AP_BattMonitor &battery,
                                     MAV_BATTERY_CHARGE_STATE_UNDEFINED);
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 // returns true if all battery instances were reported
 bool GCS_MAVLINK::send_battery_status() const
 {
@@ -271,13 +228,7 @@ bool GCS_MAVLINK::send_battery_status() const
     }
     return true;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_distance_sensor(const AP_RangeFinder_Backend *sensor, const uint8_t instance) const
 {
     if (!sensor->has_data()) {
@@ -295,13 +246,7 @@ void GCS_MAVLINK::send_distance_sensor(const AP_RangeFinder_Backend *sensor, con
         sensor->orientation(),                   // direction the sensor faces from MAV_SENSOR_ORIENTATION enum
         0);                                      // Measurement covariance in centimeters, 0 for unknown / invalid readings
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 bool GCS_MAVLINK::send_distance_sensor() const
 {
     RangeFinder *rangefinder = RangeFinder::get_singleton();
@@ -335,23 +280,15 @@ bool GCS_MAVLINK::send_distance_sensor() const
     }
     return true;
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_rangefinder_downward() const
-*函数功能：发送测距仪数据
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_rangefinder_downward() const
 {
     RangeFinder *rangefinder = RangeFinder::get_singleton();
-    if (rangefinder == nullptr)
-    {
+    if (rangefinder == nullptr) {
         return;
     }
     AP_RangeFinder_Backend *s = rangefinder->find_instance(ROTATION_PITCH_270);
-    if (s == nullptr)
-    {
+    if (s == nullptr) {
         return;
     }
     mavlink_msg_rangefinder_send(
@@ -359,13 +296,7 @@ void GCS_MAVLINK::send_rangefinder_downward() const
             s->distance_cm() * 0.01f,
             s->voltage_mv() * 0.001f);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 bool GCS_MAVLINK::send_proximity() const
 {
     AP_Proximity *proximity = AP_Proximity::get_singleton();
@@ -410,14 +341,8 @@ bool GCS_MAVLINK::send_proximity() const
     }
     return true;
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_ahrs2()
-*函数功能：发送ahrs2信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：report AHRS2 state
-****************************************************************************************************************/
 
+// report AHRS2 state
 void GCS_MAVLINK::send_ahrs2()
 {
 #if AP_AHRS_NAVEKF_AVAILABLE
@@ -451,14 +376,6 @@ void GCS_MAVLINK::send_ahrs2()
 #endif
 }
 
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 /*
   handle a MISSION_REQUEST_LIST mavlink packet
  */
@@ -476,34 +393,26 @@ void GCS_MAVLINK::handle_mission_request_list(AP_Mission &mission, mavlink_messa
     waypoint_receiving = false;             // record that we are sending commands (i.e. not receiving)
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_mission_request(AP_Mission &mission, mavlink_message_t *msg)
-*函数功能：处理任务需求
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a MISSION_REQUEST mavlink packet
-****************************************************************************************************************/
-
+/*
+  handle a MISSION_REQUEST mavlink packet
+ */
 void GCS_MAVLINK::handle_mission_request(AP_Mission &mission, mavlink_message_t *msg)
 {
     AP_Mission::Mission_Command cmd;
 
-    if (msg->msgid == MAVLINK_MSG_ID_MISSION_REQUEST_INT)
-    {
+    if (msg->msgid == MAVLINK_MSG_ID_MISSION_REQUEST_INT) {  
         // decode
         mavlink_mission_request_int_t packet;
         mavlink_msg_mission_request_int_decode(msg, &packet);
 
         // retrieve mission from eeprom
-        if (!mission.read_cmd_from_storage(packet.seq, cmd))
-        {
+        if (!mission.read_cmd_from_storage(packet.seq, cmd)) {
             goto mission_item_send_failed;
         }
 
         mavlink_mission_item_int_t ret_packet;
         memset(&ret_packet, 0, sizeof(ret_packet));
-        if (!AP_Mission::mission_cmd_to_mavlink_int(cmd, ret_packet))
-        {
+        if (!AP_Mission::mission_cmd_to_mavlink_int(cmd, ret_packet)) {
             goto mission_item_send_failed;
         }
 
@@ -533,8 +442,7 @@ void GCS_MAVLINK::handle_mission_request(AP_Mission &mission, mavlink_message_t 
                                         MAVLINK_MSG_ID_MISSION_ITEM_MIN_LEN,
                                         MAVLINK_MSG_ID_MISSION_ITEM_INT_LEN,
                                         MAVLINK_MSG_ID_MISSION_ITEM_INT_CRC);
-    } else
-    {
+    } else {
         // decode
         mavlink_mission_request_t packet;
         mavlink_msg_mission_request_decode(msg, &packet);
@@ -593,14 +501,10 @@ mission_item_send_failed:
     mavlink_msg_mission_ack_send(chan, msg->sysid, msg->compid, MAV_MISSION_ERROR,
                                  MAV_MISSION_TYPE_MISSION);
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_mission_set_current(AP_Mission &mission, mavlink_message_t *msg)
-*函数功能：处理一个任务设置当前mavlink包
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a MISSION_SET_CURRENT mavlink packet
-****************************************************************************************************************/
 
+/*
+  handle a MISSION_SET_CURRENT mavlink packet
+ */
 void GCS_MAVLINK::handle_mission_set_current(AP_Mission &mission, mavlink_message_t *msg)
 {
     // decode
@@ -608,19 +512,14 @@ void GCS_MAVLINK::handle_mission_set_current(AP_Mission &mission, mavlink_messag
     mavlink_msg_mission_set_current_decode(msg, &packet);
 
     // set current command
-    if (mission.set_current_cmd(packet.seq))
-    {
+    if (mission.set_current_cmd(packet.seq)) {
         mavlink_msg_mission_current_send(chan, packet.seq);
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_mission_count(AP_Mission &mission, mavlink_message_t *msg)
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a MISSION_COUNT mavlink packet
-****************************************************************************************************************/
 
+/*
+  handle a MISSION_COUNT mavlink packet
+ */
 void GCS_MAVLINK::handle_mission_count(AP_Mission &mission, mavlink_message_t *msg)
 {
     // decode
@@ -648,14 +547,10 @@ void GCS_MAVLINK::handle_mission_count(AP_Mission &mission, mavlink_message_t *m
     waypoint_dest_sysid = msg->sysid;       // record system id of GCS who wants to upload the mission
     waypoint_dest_compid = msg->compid;     // record component id of GCS who wants to upload the mission
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_mission_clear_all(AP_Mission &mission, mavlink_message_t *msg)
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a MISSION_CLEAR_ALL mavlink packet
-****************************************************************************************************************/
 
+/*
+  handle a MISSION_CLEAR_ALL mavlink packet
+ */
 void GCS_MAVLINK::handle_mission_clear_all(AP_Mission &mission, mavlink_message_t *msg)
 {
     // decode
@@ -673,14 +568,10 @@ void GCS_MAVLINK::handle_mission_clear_all(AP_Mission &mission, mavlink_message_
                                      MAV_MISSION_TYPE_MISSION);
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_mission_write_partial_list(AP_Mission &mission, mavlink_message_t *msg)
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a MISSION_WRITE_PARTIAL_LIST mavlink packet
-****************************************************************************************************************/
 
+/*
+  handle a MISSION_WRITE_PARTIAL_LIST mavlink packet
+ */
 void GCS_MAVLINK::handle_mission_write_partial_list(AP_Mission &mission, mavlink_message_t *msg)
 {
     // decode
@@ -705,39 +596,22 @@ void GCS_MAVLINK::handle_mission_write_partial_list(AP_Mission &mission, mavlink
     waypoint_dest_compid = msg->compid;     // record component id of GCS who wants to partially update the mission
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_gimbal_report(AP_Mount &mount, mavlink_message_t *msg) const
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a GIMBAL_REPORT mavlink packet
-****************************************************************************************************************/
+
+/*
+  handle a GIMBAL_REPORT mavlink packet
+ */
 void GCS_MAVLINK::handle_gimbal_report(AP_Mount &mount, mavlink_message_t *msg) const
 {
     mount.handle_gimbal_report(chan, msg);
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_textv(MAV_SEVERITY severity, const char *fmt, va_list arg_list)
 {
     char text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1] {};
     hal.util->vsnprintf((char *)text, sizeof(text)-1, fmt, arg_list);
     gcs().send_statustext(severity, (1<<chan), text);
 }
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::send_text(MAV_SEVERITY severity, const char *fmt, ...)
 {
     va_list arg_list;
@@ -745,13 +619,7 @@ void GCS_MAVLINK::send_text(MAV_SEVERITY severity, const char *fmt, ...)
     send_textv(severity, fmt, arg_list);
     va_end(arg_list);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_radio_status(mavlink_message_t *msg, DataFlash_Class &dataflash, bool log_radio)
 {
     mavlink_radio_t packet;
@@ -785,13 +653,7 @@ void GCS_MAVLINK::handle_radio_status(mavlink_message_t *msg, DataFlash_Class &d
         dataflash.Log_Write_Radio(packet);
     }
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
   handle an incoming mission item
   return true if this is the last mission item, otherwise false
@@ -933,95 +795,61 @@ mission_ack:
 
     return mission_is_complete;
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::push_deferred_messages(
-*函数功能：尝试发送最后一条消息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::push_deferred_messages()
 {
-//	hal.uartC->printf("%%%%%%\r\n");
-//	hal.uartC->printf("num_deferred_messages=%d\r\n",num_deferred_messages);
-    while (num_deferred_messages != 0) //num_deferred_messages=0
-    {
-//    	hal.uartC->printf("next_deferred_message=%d\r\n",next_deferred_message);
-//    	hal.uartC->printf("deferred_messages[next_deferred_message]=%d\r\n",deferred_messages[next_deferred_message]);
-        if (!try_send_message(deferred_messages[next_deferred_message]))
-        {
-//        	hal.uartC->printf("%%%\r\n");
+    while (num_deferred_messages != 0) {
+        if (!try_send_message(deferred_messages[next_deferred_message])) {
             break;
         }
         next_deferred_message++;
-        if (next_deferred_message == ARRAY_SIZE(deferred_messages))
-        {
+        if (next_deferred_message == ARRAY_SIZE(deferred_messages)) {
             next_deferred_message = 0;
         }
         num_deferred_messages--;
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::retry_deferred()
-*函数功能：消息推迟发送
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::retry_deferred()
 {
     push_deferred_messages();
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_message(enum ap_message id)
-*函数功能：使用mavlink发送消息，处理消息队列
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：send a message using mavlink, handling message queueing
-****************************************************************************************************************/
+// send a message using mavlink, handling message queueing
 void GCS_MAVLINK::send_message(enum ap_message id)
 {
     uint8_t i, nextid;
 
-    if (id == MSG_HEARTBEAT)          //心跳
-    {
-        save_signing_timestamp(false);//定期保存时间信息
+    if (id == MSG_HEARTBEAT) {
+        save_signing_timestamp(false);
     }
 
-    //看看我们是否可以发送延迟的消息，如果有的话： see if we can send the deferred messages, if any:
+    // see if we can send the deferred messages, if any:
     push_deferred_messages();
 
     // if there are no deferred messages, attempt to send straight away:
-    if (num_deferred_messages == 0)
-    {
-    	 hal.uartC->printf("id=%d\r\n",id);
-        if (try_send_message(id)) //发送数据
-        {
+    if (num_deferred_messages == 0) {
+        if (try_send_message(id)) {
             // yay, we sent it!
             return;
         }
     }
 
     // we failed to send the message this time around, so try to defer:
-    if (num_deferred_messages == ARRAY_SIZE(deferred_messages))
-    {
+    if (num_deferred_messages == ARRAY_SIZE(deferred_messages)) {
         // the defer buffer is full, discard this attempt to send.
         // Note that the message *may* already be in the defer buffer
         return;
     }
 
-    //此消息ID可能已经被推迟。---- this message id might already be deferred
-    for (i=0, nextid = next_deferred_message; i < num_deferred_messages; i++)
-    {
-        if (deferred_messages[nextid] == id)
-        {
+    // check if this message is deferred:
+    for (i=0, nextid = next_deferred_message; i < num_deferred_messages; i++) {
+        if (deferred_messages[nextid] == id) {
             // it's already deferred
             return;
         }
         nextid++;
-        if (nextid == ARRAY_SIZE(deferred_messages))
-        {
+        if (nextid == ARRAY_SIZE(deferred_messages)) {
             nextid = 0;
         }
     }
@@ -1030,15 +858,6 @@ void GCS_MAVLINK::send_message(enum ap_message id)
     deferred_messages[nextid] = id;
     num_deferred_messages++;
 }
-
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::packetReceived(const mavlink_status_t &status, mavlink_message_t &msg)
-*函数功能：包接收处理
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 
 void GCS_MAVLINK::packetReceived(const mavlink_status_t &status,
                                  mavlink_message_t &msg)
@@ -1060,24 +879,19 @@ void GCS_MAVLINK::packetReceived(const mavlink_status_t &status,
             cstatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
         }
     }
-    if (routing.check_and_forward(chan, &msg) && accept_packet(status, msg))
-    {
+    if (routing.check_and_forward(chan, &msg) &&
+        accept_packet(status, msg)) {
         handleMessage(&msg);
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::update(uint32_t max_time_us)
-*函数功能：数据更新
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-void GCS_MAVLINK::update(uint32_t max_time_us)
+
+void
+GCS_MAVLINK::update(uint32_t max_time_us)
 {
     // receive new packets
-    mavlink_message_t msg;                       //协议
-    mavlink_status_t status;                     //协议状态
-    uint32_t tstart_us = AP_HAL::micros();       //开始时间
+    mavlink_message_t msg;
+    mavlink_status_t status;
+    uint32_t tstart_us = AP_HAL::micros();
     uint32_t now_ms = AP_HAL::millis();
 
     hal.util->perf_begin(_perf_update);
@@ -1085,21 +899,20 @@ void GCS_MAVLINK::update(uint32_t max_time_us)
     status.packet_rx_drop_count = 0;
 
     // process received bytes
-    uint16_t nbytes = comm_get_available(chan); //接收串口数据
+    uint16_t nbytes = comm_get_available(chan);
     for (uint16_t i=0; i<nbytes; i++)
     {
-        const uint8_t c = (uint8_t)_port->read(); //接收串口通道
+        const uint8_t c = (uint8_t)_port->read();
         const uint32_t protocol_timeout = 4000;
         
-        if (alternative.handler && now_ms - alternative.last_mavlink_ms > protocol_timeout)
-        {
+        if (alternative.handler &&
+            now_ms - alternative.last_mavlink_ms > protocol_timeout) {
             /*
               we have an alternative protocol handler installed and we
               haven't parsed a MAVLink packet for 4 seconds. Try
               parsing using alternative handler
              */
-            if (alternative.handler(c, mavlink_comm_port[chan]))
-            {
+            if (alternative.handler(c, mavlink_comm_port[chan])) {
                 alternative.last_alternate_ms = now_ms;
                 gcs_alternative_active[chan] = true;
             }
@@ -1108,8 +921,7 @@ void GCS_MAVLINK::update(uint32_t max_time_us)
               we may also try parsing as MAVLink if we haven't had a
               successful parse on the alternative protocol for 4s
              */
-            if (now_ms - alternative.last_alternate_ms <= protocol_timeout)
-            {
+            if (now_ms - alternative.last_alternate_ms <= protocol_timeout) {
                 continue;
             }
         }
@@ -1117,21 +929,18 @@ void GCS_MAVLINK::update(uint32_t max_time_us)
         bool parsed_packet = false;
 
         // Try to get a new message
-        if (mavlink_parse_char(chan, c, &msg, &status)) //开始获取新信息，进行数据解包
-        {
+        if (mavlink_parse_char(chan, c, &msg, &status)) {
             hal.util->perf_begin(_perf_packet);
-            packetReceived(status, msg);      //解析数据
+            packetReceived(status, msg);
             hal.util->perf_end(_perf_packet);
             parsed_packet = true;
             gcs_alternative_active[chan] = false;
             alternative.last_mavlink_ms = now_ms;
         }
 
-        if (parsed_packet || i % 100 == 0)
-        {
+        if (parsed_packet || i % 100 == 0) {
             // make sure we don't spend too much time parsing mavlink messages
-            if (AP_HAL::micros() - tstart_us > max_time_us)
-            {
+            if (AP_HAL::micros() - tstart_us > max_time_us) {
                 break;
             }
         }
@@ -1141,24 +950,20 @@ void GCS_MAVLINK::update(uint32_t max_time_us)
 
     // send a timesync message every 10 seconds; this is for data
     // collection purposes
-    if (tnow - _timesync_request.last_sent_ms > _timesync_request.interval_ms)
-    {
+    if (tnow - _timesync_request.last_sent_ms > _timesync_request.interval_ms) {
         if (HAVE_PAYLOAD_SPACE(chan, TIMESYNC)) {
             send_timesync();
             _timesync_request.last_sent_ms = tnow;
         }
     }
 
-    if (waypoint_receiving)
-    {
+    if (waypoint_receiving) {
         const uint32_t wp_recv_time = 1000U + (stream_slowdown*20);
 
         // stop waypoint receiving if timeout
-        if (tnow - waypoint_timelast_receive > wp_recv_time+waypoint_receive_timeout)
-        {
+        if (tnow - waypoint_timelast_receive > wp_recv_time+waypoint_receive_timeout) {
             waypoint_receiving = false;
-        } else if (tnow - waypoint_timelast_request > wp_recv_time)
-        {
+        } else if (tnow - waypoint_timelast_request > wp_recv_time) {
             waypoint_timelast_request = tnow;
             send_message(MSG_NEXT_WAYPOINT);
         }
@@ -1167,14 +972,10 @@ void GCS_MAVLINK::update(uint32_t max_time_us)
     hal.util->perf_end(_perf_update);    
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_system_time()
-*函数功能：发送系统时间信息
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：send the SYSTEM_TIME message
-****************************************************************************************************************/
 
+/*
+  send the SYSTEM_TIME message
+ */
 void GCS_MAVLINK::send_system_time()
 {
     uint64_t time_unix = 0;
@@ -1186,20 +987,15 @@ void GCS_MAVLINK::send_system_time()
         AP_HAL::millis());
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_radio_in()
-*函数功能：发送遥控器通道信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：send RC_CHANNELS messages
-****************************************************************************************************************/
 
+/*
+  send RC_CHANNELS messages
+ */
 void GCS_MAVLINK::send_radio_in()
 {
     AP_RSSI *rssi = AP::rssi();
     uint8_t receiver_rssi = 0;
-    if (rssi != nullptr)
-    {
+    if (rssi != nullptr) {
         receiver_rssi = rssi->read_receiver_rssi_uint8();
     }
 
@@ -1209,8 +1005,7 @@ void GCS_MAVLINK::send_radio_in()
     uint16_t values[18];
     RC_Channels::get_radio_in(values, 18);
 
-    if (status && (status->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1))
-    {
+    if (status && (status->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
         // for mavlink1 send RC_CHANNELS_RAW, for compatibility with OSD implementations
         mavlink_msg_rc_channels_raw_send(
             chan,
@@ -1226,8 +1021,7 @@ void GCS_MAVLINK::send_radio_in()
             values[7],
             receiver_rssi);
     }
-    if (!HAVE_PAYLOAD_SPACE(chan, RC_CHANNELS))
-    {
+    if (!HAVE_PAYLOAD_SPACE(chan, RC_CHANNELS)) {
         // can't fit RC_CHANNELS
         return;
     }
@@ -1256,14 +1050,6 @@ void GCS_MAVLINK::send_radio_in()
         receiver_rssi);        
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_raw_imu()
-*函数功能：发送原始imu数据
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::send_raw_imu()
 {
     const AP_InertialSensor &ins = AP::ins();
@@ -1272,11 +1058,9 @@ void GCS_MAVLINK::send_raw_imu()
     const Vector3f &accel = ins.get_accel(0);
     const Vector3f &gyro = ins.get_gyro(0);
     Vector3f mag;
-    if (compass.get_count() >= 1)
-    {
+    if (compass.get_count() >= 1) {
         mag = compass.get_field(0);
-    } else
-    {
+    } else {
         mag.zero();
     }
 
@@ -1295,21 +1079,17 @@ void GCS_MAVLINK::send_raw_imu()
 
     if (ins.get_gyro_count() <= 1 &&
         ins.get_accel_count() <= 1 &&
-        compass.get_count() <= 1)
-    {
+        compass.get_count() <= 1) {
         return;
     }
-    if (!HAVE_PAYLOAD_SPACE(chan, SCALED_IMU2))
-    {
+    if (!HAVE_PAYLOAD_SPACE(chan, SCALED_IMU2)) {
         return;
     }
     const Vector3f &accel2 = ins.get_accel(1);
     const Vector3f &gyro2 = ins.get_gyro(1);
-    if (compass.get_count() >= 2)
-    {
+    if (compass.get_count() >= 2) {
         mag = compass.get_field(1);
-    } else
-    {
+    } else {
         mag.zero();
     }
     mavlink_msg_scaled_imu2_send(
@@ -1330,41 +1110,30 @@ void GCS_MAVLINK::send_raw_imu()
         compass.get_count() <= 2) {
         return;
     }
-    if (!HAVE_PAYLOAD_SPACE(chan, SCALED_IMU3))
-    {
+    if (!HAVE_PAYLOAD_SPACE(chan, SCALED_IMU3)) {
         return;
     }
     const Vector3f &accel3 = ins.get_accel(2);
     const Vector3f &gyro3 = ins.get_gyro(2);
-    if (compass.get_count() >= 3)
-    {
+    if (compass.get_count() >= 3) {
         mag = compass.get_field(2);
-    } else
-    {
+    } else {
         mag.zero();
     }
     mavlink_msg_scaled_imu3_send(
         chan,
         AP_HAL::millis(),
-        accel3.x * 1000.0f / GRAVITY_MSS,  //发送加速度
+        accel3.x * 1000.0f / GRAVITY_MSS,
         accel3.y * 1000.0f / GRAVITY_MSS,
         accel3.z * 1000.0f / GRAVITY_MSS,
-        gyro3.x * 1000.0f,                 //发送陀螺仪
+        gyro3.x * 1000.0f,
         gyro3.y * 1000.0f,
         gyro3.z * 1000.0f,
-        mag.x,                             //发送地磁信息
+        mag.x,
         mag.y,
         mag.z);        
 }
 
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 // sub overrides this to send on-board temperature
 void GCS_MAVLINK::send_scaled_pressure3()
 {
@@ -1385,13 +1154,7 @@ void GCS_MAVLINK::send_scaled_pressure3()
         (pressure - barometer.get_ground_pressure(2))*0.01f, // hectopascal
         barometer.get_temperature(2)*100); // 0.01 degrees C
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_scaled_pressure()
-*函数功能：发送气压计数据
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_scaled_pressure()
 {
     uint32_t now = AP_HAL::millis();
@@ -1424,13 +1187,7 @@ void GCS_MAVLINK::send_scaled_pressure()
 
     send_scaled_pressure3();
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_sensor_offsets()
-*函数功能：发送传感器误差信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_sensor_offsets()
 {
     const AP_InertialSensor &ins = AP::ins();
@@ -1439,8 +1196,7 @@ void GCS_MAVLINK::send_sensor_offsets()
     // run this message at a much lower rate - otherwise it
     // pointlessly wastes quite a lot of bandwidth
     static uint8_t counter;
-    if (counter++ < 10)
-    {
+    if (counter++ < 10) {
         return;
     }
     counter = 0;
@@ -1466,13 +1222,6 @@ void GCS_MAVLINK::send_sensor_offsets()
                                     accel_offsets.z);
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_ahrs()
-*函数功能：发送ahrs信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::send_ahrs()
 {
     const AP_AHRS &ahrs = AP::ahrs();
@@ -1487,13 +1236,7 @@ void GCS_MAVLINK::send_ahrs()
         ahrs.get_error_rp(),
         ahrs.get_error_yaw());
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
     send a statustext text string to specific MAVLink bitmask
 */
@@ -1532,13 +1275,7 @@ void GCS::send_statustext(MAV_SEVERITY severity, uint8_t dest_bitmask, const cha
         notify->send_text(text);
     }
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
     send a statustext message to specific MAVLink connections in a bitmask
  */
@@ -1586,86 +1323,44 @@ void GCS::service_statustext(void)
         }
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS::send_message(enum ap_message id)
-*函数功能：发送信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS::send_message(enum ap_message id)
 {
-    for (uint8_t i=0; i<num_gcs(); i++)
-    {
-        if (chan(i).initialised)
-        {
+    for (uint8_t i=0; i<num_gcs(); i++) {
+        if (chan(i).initialised) {
             chan(i).send_message(id);
         }
     }
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS::retry_deferred()
-*函数功能：推迟重试
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS::retry_deferred()
 {
-    for (uint8_t i=0; i<num_gcs(); i++)
-    {
-        if (chan(i).initialised)
-        {
+    for (uint8_t i=0; i<num_gcs(); i++) {
+        if (chan(i).initialised) {
             chan(i).retry_deferred();
         }
     }
     service_statustext();
 }
-/**************************************************************************************************************
-*函数原型：void GCS::data_stream_send()
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS::data_stream_send()
 {
-    for (uint8_t i=0; i<num_gcs(); i++)
-    {
-        if (chan(i).initialised)
-        {
-            chan(i).data_stream_send(); //发送数据
+    for (uint8_t i=0; i<num_gcs(); i++) {
+        if (chan(i).initialised) {
+            chan(i).data_stream_send();
         }
     }
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS::update(void)
-*函数功能：数据更新
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：look for incoming commands on the GCS links
-****************************************************************************************************************/
 void GCS::update(void)
 {
-    for (uint8_t i=0; i<num_gcs(); i++)
-    {
-        if (chan(i).initialised) //通道初始化，这里主要可以选择设置，是采用串口，还是USB进行数据通信
-        {
-            chan(i).update(); //通道更新
+    for (uint8_t i=0; i<num_gcs(); i++) {
+        if (chan(i).initialised) {
+            chan(i).update();
         }
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS::send_mission_item_reached_message(uint16_t mission_index)
-*函数功能：数据更新
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：look for incoming commands on the GCS links
-****************************************************************************************************************/
 void GCS::send_mission_item_reached_message(uint16_t mission_index)
 {
     for (uint8_t i=0; i<num_gcs(); i++) {
@@ -1675,52 +1370,33 @@ void GCS::send_mission_item_reached_message(uint16_t mission_index)
         }
     }
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS::setup_uarts(AP_SerialManager &serial_manager)
 {
     for (uint8_t i = 1; i < MAVLINK_COMM_NUM_BUFFERS; i++) {
         chan(i).setup_uart(serial_manager, AP_SerialManager::SerialProtocol_MAVLink, i);
     }
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_battery2()
-*函数功能：报告电池2状态
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：report battery2 state
-****************************************************************************************************************/
+
+// report battery2 state
 void GCS_MAVLINK::send_battery2()
 {
     const AP_BattMonitor &battery = AP::battery();
 
-    if (battery.num_instances() > 1)
-    {
+    if (battery.num_instances() > 1) {
         int16_t current;
-        if (battery.has_current(1))
-        {
+        if (battery.has_current(1)) {
             current = battery.current_amps(1) * 100; // 10*mA
-        } else
-        {
+        } else {
             current = -1;
         }
-        mavlink_msg_battery2_send(chan, battery.voltage(1)*1000, current); //发送电压,电流信息
+        mavlink_msg_battery2_send(chan, battery.voltage(1)*1000, current);
     }
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_set_mode(mavlink_message_t* msg)
-*函数功能：处理设置模式
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：handle a SET_MODE MAVLink message
-****************************************************************************************************************/
-
+/*
+  handle a SET_MODE MAVLink message
+ */
 void GCS_MAVLINK::handle_set_mode(mavlink_message_t* msg)
 {
     mavlink_set_mode_t packet;
@@ -1734,13 +1410,7 @@ void GCS_MAVLINK::handle_set_mode(mavlink_message_t* msg)
     // send ACK or NAK
     mavlink_msg_command_ack_send_buf(msg, chan, MAVLINK_MSG_ID_SET_MODE, result);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
   code common to both SET_MODE mavlink message and command long set_mode msg
 */
@@ -1768,15 +1438,11 @@ MAV_RESULT GCS_MAVLINK::_set_mode_common(const MAV_MODE _base_mode, const uint32
 
     return result;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：send OPTICAL_FLOW message
-****************************************************************************************************************/
-#if AP_AHRS_NAVEKF_AVAILABLE
 
+#if AP_AHRS_NAVEKF_AVAILABLE
+/*
+  send OPTICAL_FLOW message
+ */
 void GCS_MAVLINK::send_opticalflow(const OpticalFlow &optflow)
 {
     // exit immediately if no optical flow sensor or not healthy
@@ -1790,39 +1456,28 @@ void GCS_MAVLINK::send_opticalflow(const OpticalFlow &optflow)
 
     const AP_AHRS &ahrs = AP::ahrs();
     float hagl = 0;
-    if (ahrs.have_inertial_nav())
-    {
+    if (ahrs.have_inertial_nav()) {
         if (!ahrs.get_hagl(hagl)) {
             return;
         }
     }
-//    hal.uartC->printf("flowRate.x=%d\r\n",flowRate.x);
-//    hal.uartC->printf("flowRate.y=%d\r\n",flowRate.y);
-//    hal.uartC->printf("flowRate.x - bodyRate.x=%d\r\n",flowRate.x - bodyRate.x);
-//    hal.uartC->printf("flowRate.y - bodyRate.y=%d\r\n",flowRate.y - bodyRate.y);
-//    hal.uartC->printf("optflow.quality()=%d\r\n",optflow.quality());
+
     // populate and send message
     mavlink_msg_optical_flow_send(
         chan,
         AP_HAL::millis(),
         0, // sensor id is zero
-        flowRate.x,              //opt_x
-        flowRate.y,              //opt_y
-        flowRate.x - bodyRate.x, //opt_m_x
-        flowRate.y - bodyRate.y, //opt_m_y
-        optflow.quality(),       //opt_qua
+        flowRate.x,
+        flowRate.y,
+        flowRate.x - bodyRate.x,
+        flowRate.y - bodyRate.y,
+        optflow.quality(),
         hagl,  // ground distance (in meters) set to zero
         flowRate.x,
         flowRate.y);
 }
 #endif
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
   send AUTOPILOT_VERSION packet
  */
@@ -1878,14 +1533,10 @@ void GCS_MAVLINK::send_autopilot_version() const
     );
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_local_position() const
-*函数功能：发送本地位置NED消息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：send LOCAL_POSITION_NED message
-****************************************************************************************************************/
 
+/*
+  send LOCAL_POSITION_NED message
+ */
 void GCS_MAVLINK::send_local_position() const
 {
     const AP_AHRS &ahrs = AP::ahrs();
@@ -1908,15 +1559,9 @@ void GCS_MAVLINK::send_local_position() const
         velocity.z);
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_vibration() const
-*函数功能：发送震动信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：send VIBRATION message
-****************************************************************************************************************/
-
+/*
+  send VIBRATION message
+ */
 void GCS_MAVLINK::send_vibration() const
 {
     const AP_InertialSensor &ins = AP::ins();
@@ -1933,26 +1578,14 @@ void GCS_MAVLINK::send_vibration() const
         ins.get_accel_clip_count(1),
         ins.get_accel_clip_count(2));
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_named_float(const char *name, float value) const
 {
     char float_name[MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN+1] {};
     strncpy(float_name, name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
     mavlink_msg_named_value_float_send(chan, AP_HAL::millis(), float_name, value);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_home() const
 {
     if (!HAVE_PAYLOAD_SPACE(chan, HOME_POSITION)) {
@@ -1975,13 +1608,7 @@ void GCS_MAVLINK::send_home() const
         0.0f, 0.0f, 0.0f,
         AP_HAL::micros64());
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_ekf_origin() const
 {
     if (!HAVE_PAYLOAD_SPACE(chan, GPS_GLOBAL_ORIGIN)) {
@@ -1999,35 +1626,20 @@ void GCS_MAVLINK::send_ekf_origin() const
         AP_HAL::micros64());
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_heartbeat() const
-*函数功能：发送心跳包数据
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：Send MAVLink heartbeat
-****************************************************************************************************************/
+/*
+  Send MAVLink heartbeat
+ */
 void GCS_MAVLINK::send_heartbeat() const
 {
     mavlink_msg_heartbeat_send(
         chan,
-        frame_type(),        //四旋翼
-		MAV_AUTOPILOT_ARDUPILOTMEGA,
-        base_mode(), //51
-        custom_mode(),//03
-        system_status());//03
+        frame_type(),
+        MAV_AUTOPILOT_ARDUPILOTMEGA,
+        base_mode(),
+        custom_mode(),
+        system_status());
 }
 
-
-
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 float GCS_MAVLINK::adjust_rate_for_stream_trigger(enum streams stream_num)
 {
     // send at a much lower rate while handling waypoints and
@@ -2039,23 +1651,15 @@ float GCS_MAVLINK::adjust_rate_for_stream_trigger(enum streams stream_num)
 
     return 1.0f;
 }
-/**************************************************************************************************************
-*函数原型：bool GCS_MAVLINK::telemetry_delayed() const
-*函数功能：我们是否仍在延迟遥测以避免XBEE砖砌？
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息： are we still delaying telemetry to try to avoid Xbee bricking?
-****************************************************************************************************************/
 
+// are we still delaying telemetry to try to avoid Xbee bricking?
 bool GCS_MAVLINK::telemetry_delayed() const
 {
     uint32_t tnow = AP_HAL::millis() >> 10;
-    if (tnow > telem_delay())
-    {
+    if (tnow > telem_delay()) {
         return false;
     }
-    if (chan == MAVLINK_COMM_0 && hal.gpio->usb_connected())
-    {
+    if (chan == MAVLINK_COMM_0 && hal.gpio->usb_connected()) {
         // this is USB telemetry, so won't be an Xbee
         return false;
     }
@@ -2064,14 +1668,10 @@ bool GCS_MAVLINK::telemetry_delayed() const
     return true;
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_servo_output_raw()
-*函数功能：发送私服输出
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息： send SERVO_OUTPUT_RAW
-****************************************************************************************************************/
 
+/*
+  send SERVO_OUTPUT_RAW
+ */
 void GCS_MAVLINK::send_servo_output_raw()
 {
     uint16_t values[16] {};
@@ -2098,14 +1698,6 @@ void GCS_MAVLINK::send_servo_output_raw()
 }
 
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_collision_all(const AP_Avoidance::Obstacle &threat, MAV_COLLISION_ACTION behaviour)
-*函数功能：发送私服输出
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息： 全部发送冲突
-****************************************************************************************************************/
 void GCS_MAVLINK::send_collision_all(const AP_Avoidance::Obstacle &threat, MAV_COLLISION_ACTION behaviour)
 {
     for (uint8_t i=0; i<MAVLINK_COMM_NUM_BUFFERS; i++) {
@@ -2164,13 +1756,6 @@ float GCS_MAVLINK::vfr_hud_alt() const
     return global_position_current_loc.alt * 0.01f; // cm -> m
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_vfr_hud()
-*函数功能：发送ahrs信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::send_vfr_hud()
 {
     AP_AHRS &ahrs = AP::ahrs();
@@ -2279,25 +1864,19 @@ uint64_t GCS_MAVLINK::timesync_timestamp_ns() const
     return AP_HAL::micros64()*1000LL + mavlink_system.sysid;
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_timesync(mavlink_message_t *msg)
-*函数功能：返回一个时间同步请求，在收到时发送回TS1，TC1是USEC中的本地时间戳
-*修改日期：2018-1-30
-*修改作者：cihang_uav
-*备注信息：return a timesync request Sends back ts1 as received, and tc1 is the local timestamp in usec
-****************************************************************************************************************/
-
+/*
+  return a timesync request
+  Sends back ts1 as received, and tc1 is the local timestamp in usec
+ */
 void GCS_MAVLINK::handle_timesync(mavlink_message_t *msg)
 {
     // decode incoming timesync message
     mavlink_timesync_t tsync;
     mavlink_msg_timesync_decode(msg, &tsync);
 
-    if (tsync.tc1 != 0)
-    {
+    if (tsync.tc1 != 0) {
         // this is a response to a timesync request
-        if (tsync.ts1 != _timesync_request.sent_ts1)
-        {
+        if (tsync.ts1 != _timesync_request.sent_ts1) {
             // we didn't actually send the request.... or it's a
             // response to an ancient request...
             return;
@@ -2340,8 +1919,6 @@ void GCS_MAVLINK::handle_timesync(mavlink_message_t *msg)
         );
 }
 
-
-
 /*
  * broadcast a timesync message.  We may get multiple responses to this request.
  */
@@ -2355,18 +1932,10 @@ void GCS_MAVLINK::send_timesync()
         );
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_statustext(mavlink_message_t *msg)
-*函数功能: 处理状态信息
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::handle_statustext(mavlink_message_t *msg)
 {
     DataFlash_Class *df = DataFlash_Class::instance();
-    if (df == nullptr)
-    {
+    if (df == nullptr) {
         return;
     }
 
@@ -2390,13 +1959,7 @@ void GCS_MAVLINK::handle_statustext(mavlink_message_t *msg)
     df->Log_Write_Message(text);
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_system_time_message(const mavlink_message_t *msg)
 {
     mavlink_system_time_t packet;
@@ -2405,13 +1968,6 @@ void GCS_MAVLINK::handle_system_time_message(const mavlink_message_t *msg)
     AP::rtc().set_utc_usec(packet.time_unix_usec, AP_RTC::SOURCE_MAVLINK_SYSTEM_TIME);
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 MAV_RESULT GCS_MAVLINK::handle_command_camera(const mavlink_command_long_t &packet)
 {
     AP_Camera *camera = get_camera();
@@ -2451,13 +2007,6 @@ MAV_RESULT GCS_MAVLINK::handle_command_camera(const mavlink_command_long_t &pack
     return result;
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 // sets ekf_origin if it has not been set.
 //  should only be used when there is no GPS to provide an absolute position
 void GCS_MAVLINK::set_ekf_origin(const Location& loc)
@@ -2485,13 +2034,7 @@ void GCS_MAVLINK::set_ekf_origin(const Location& loc)
     // send ekf origin to GCS
     send_ekf_origin();
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_set_gps_global_origin(const mavlink_message_t *msg)
 {
     mavlink_set_gps_global_origin_t packet;
@@ -2509,13 +2052,7 @@ void GCS_MAVLINK::handle_set_gps_global_origin(const mavlink_message_t *msg)
     ekf_origin.alt = packet.altitude / 10;
     set_ekf_origin(ekf_origin);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
   handle a DATA96 message
  */
@@ -2540,13 +2077,7 @@ void GCS_MAVLINK::handle_data_packet(mavlink_message_t *msg)
     }
 #endif
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_vision_position_delta(mavlink_message_t *msg)
 {
     AP_VisualOdom *visual_odom = get_visual_odom();
@@ -2555,13 +2086,7 @@ void GCS_MAVLINK::handle_vision_position_delta(mavlink_message_t *msg)
     }
     visual_odom->handle_msg(msg);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_vision_position_estimate(mavlink_message_t *msg)
 {
     mavlink_vision_position_estimate_t m;
@@ -2570,13 +2095,7 @@ void GCS_MAVLINK::handle_vision_position_estimate(mavlink_message_t *msg)
     handle_common_vision_position_estimate_data(m.usec, m.x, m.y, m.z, m.roll, m.pitch, m.yaw,
                                                 PAYLOAD_SIZE(chan, VISION_POSITION_ESTIMATE));
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_global_vision_position_estimate(mavlink_message_t *msg)
 {
     mavlink_global_vision_position_estimate_t m;
@@ -2585,13 +2104,7 @@ void GCS_MAVLINK::handle_global_vision_position_estimate(mavlink_message_t *msg)
     handle_common_vision_position_estimate_data(m.usec, m.x, m.y, m.z, m.roll, m.pitch, m.yaw,
                                                 PAYLOAD_SIZE(chan, GLOBAL_VISION_POSITION_ESTIMATE));
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_vicon_position_estimate(mavlink_message_t *msg)
 {
     mavlink_vicon_position_estimate_t m;
@@ -2600,13 +2113,7 @@ void GCS_MAVLINK::handle_vicon_position_estimate(mavlink_message_t *msg)
     handle_common_vision_position_estimate_data(m.usec, m.x, m.y, m.z, m.roll, m.pitch, m.yaw,
                                                 PAYLOAD_SIZE(chan, VICON_POSITION_ESTIMATE));
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 // there are several messages which all have identical fields in them.
 // This function provides common handling for the data contained in
 // these packets
@@ -2646,13 +2153,7 @@ void GCS_MAVLINK::handle_common_vision_position_estimate_data(const uint64_t use
 
     log_vision_position_estimate_data(usec, x, y, z, roll, pitch, yaw);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::log_vision_position_estimate_data(const uint64_t usec,
                                                     const float x,
                                                     const float y,
@@ -2672,13 +2173,7 @@ void GCS_MAVLINK::log_vision_position_estimate_data(const uint64_t usec,
                                            (double)pitch,
                                            (double)yaw);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_att_pos_mocap(mavlink_message_t *msg)
 {
     mavlink_att_pos_mocap_t m;
@@ -2714,13 +2209,7 @@ void GCS_MAVLINK::handle_att_pos_mocap(mavlink_message_t *msg)
 
     log_vision_position_estimate_data(m.time_usec, m.x, m.y, m.z, roll, pitch, yaw);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::handle_command_ack(const mavlink_message_t* msg)
 {
     AP_AccelCal *accelcal = AP::ins().get_acal();
@@ -2729,58 +2218,50 @@ void GCS_MAVLINK::handle_command_ack(const mavlink_message_t* msg)
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_common_message(mavlink_message_t *msg)
-*函数功能: 处理共同信息
-*修改日期：2019-2-18
-*修改作者：cihang_uav
-*备注信息：handle messages which don't require vehicle specific data
-****************************************************************************************************************/
-
+/*
+  handle messages which don't require vehicle specific data
+ */
 void GCS_MAVLINK::handle_common_message(mavlink_message_t *msg)
 {
-    switch (msg->msgid)
-    {
-    case MAVLINK_MSG_ID_COMMAND_ACK:  //77
-    {
+    switch (msg->msgid) {
+    case MAVLINK_MSG_ID_COMMAND_ACK: {
         handle_command_ack(msg);
         break;
     }
 
-    case MAVLINK_MSG_ID_SETUP_SIGNING: //256
+    case MAVLINK_MSG_ID_SETUP_SIGNING:
         handle_setup_signing(msg);
         break;
 
-    case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:   //21
-    case MAVLINK_MSG_ID_PARAM_SET:            //23
-    case MAVLINK_MSG_ID_PARAM_REQUEST_READ:   //20
+    case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+    case MAVLINK_MSG_ID_PARAM_SET:
+    case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
         handle_common_param_message(msg);
         break;
 
-    case MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN://48
+    case MAVLINK_MSG_ID_SET_GPS_GLOBAL_ORIGIN:
         handle_set_gps_global_origin(msg);
         break;
 
-    case MAVLINK_MSG_ID_DEVICE_OP_READ: //11000
+    case MAVLINK_MSG_ID_DEVICE_OP_READ:
         handle_device_op_read(msg);
         break;
-    case MAVLINK_MSG_ID_DEVICE_OP_WRITE: //11002
+    case MAVLINK_MSG_ID_DEVICE_OP_WRITE:
         handle_device_op_write(msg);
         break;
-    case MAVLINK_MSG_ID_TIMESYNC:  //111
+    case MAVLINK_MSG_ID_TIMESYNC:
         handle_timesync(msg);
         break;
-    case MAVLINK_MSG_ID_LOG_REQUEST_LIST: //117
-    case MAVLINK_MSG_ID_LOG_REQUEST_DATA: //119
-    case MAVLINK_MSG_ID_LOG_ERASE:        //121
-    case MAVLINK_MSG_ID_LOG_REQUEST_END:  //122
-    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS: //185
+    case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
+    case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
+    case MAVLINK_MSG_ID_LOG_ERASE:
+    case MAVLINK_MSG_ID_LOG_REQUEST_END:
+    case MAVLINK_MSG_ID_REMOTE_LOG_BLOCK_STATUS:
         DataFlash_Class::instance()->handle_mavlink_msg(*this, msg);
         break;
 
 
-    case MAVLINK_MSG_ID_DIGICAM_CONTROL: //155
+    case MAVLINK_MSG_ID_DIGICAM_CONTROL:
         {
             AP_Camera *camera = get_camera();
             if (camera == nullptr) {
@@ -2790,101 +2271,92 @@ void GCS_MAVLINK::handle_common_message(mavlink_message_t *msg)
         }
         break;
 
-    case MAVLINK_MSG_ID_SET_MODE: //11
+    case MAVLINK_MSG_ID_SET_MODE:
         handle_set_mode(msg);
         break;
 
-    case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST: //183
+    case MAVLINK_MSG_ID_AUTOPILOT_VERSION_REQUEST:
         handle_send_autopilot_version(msg);
         break;
 
-    case MAVLINK_MSG_ID_MISSION_WRITE_PARTIAL_LIST: //38
-    case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:       //43
-    case MAVLINK_MSG_ID_MISSION_COUNT:              //44
-    case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:          //45
-    case MAVLINK_MSG_ID_MISSION_ITEM:               //39
-    case MAVLINK_MSG_ID_MISSION_ITEM_INT:           //73
-    case MAVLINK_MSG_ID_MISSION_REQUEST_INT:        //51
-    case MAVLINK_MSG_ID_MISSION_REQUEST:            //40
-    case MAVLINK_MSG_ID_MISSION_ACK:                //47
-    case MAVLINK_MSG_ID_MISSION_SET_CURRENT:        //41
+    case MAVLINK_MSG_ID_MISSION_WRITE_PARTIAL_LIST:
+    case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
+    case MAVLINK_MSG_ID_MISSION_COUNT:
+    case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
+    case MAVLINK_MSG_ID_MISSION_ITEM:
+    case MAVLINK_MSG_ID_MISSION_ITEM_INT:
+    case MAVLINK_MSG_ID_MISSION_REQUEST_INT:
+    case MAVLINK_MSG_ID_MISSION_REQUEST:
+    case MAVLINK_MSG_ID_MISSION_ACK:
+    case MAVLINK_MSG_ID_MISSION_SET_CURRENT:
         handle_common_mission_message(msg);
         break;
 
-    case MAVLINK_MSG_ID_SERIAL_CONTROL:             //126
+    case MAVLINK_MSG_ID_SERIAL_CONTROL:
         handle_serial_control(msg);
         break;
 
-    case MAVLINK_MSG_ID_GPS_RTCM_DATA:              //233
-    case MAVLINK_MSG_ID_GPS_INPUT:                  //232
-    case MAVLINK_MSG_ID_HIL_GPS:                    //113
-    case MAVLINK_MSG_ID_GPS_INJECT_DATA:            //123
+    case MAVLINK_MSG_ID_GPS_RTCM_DATA:
+    case MAVLINK_MSG_ID_GPS_INPUT:
+    case MAVLINK_MSG_ID_HIL_GPS:
+    case MAVLINK_MSG_ID_GPS_INJECT_DATA:
         AP::gps().handle_msg(msg);
         break;
 
-    case MAVLINK_MSG_ID_STATUSTEXT:                //253
+    case MAVLINK_MSG_ID_STATUSTEXT:
         handle_statustext(msg);
         break;
 
-    case MAVLINK_MSG_ID_LED_CONTROL:               //186
+    case MAVLINK_MSG_ID_LED_CONTROL:
         // send message to Notify
         AP_Notify::handle_led_control(msg);
         break;
 
-    case MAVLINK_MSG_ID_PLAY_TUNE:                //258
+    case MAVLINK_MSG_ID_PLAY_TUNE:
         // send message to Notify
         AP_Notify::handle_play_tune(msg);
         break;
 
-    case MAVLINK_MSG_ID_RALLY_POINT:             //175
-    case MAVLINK_MSG_ID_RALLY_FETCH_POINT:       //176
+    case MAVLINK_MSG_ID_RALLY_POINT:
+    case MAVLINK_MSG_ID_RALLY_FETCH_POINT:
         handle_common_rally_message(msg);
         break;
 
-    case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:     //66
+    case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
         handle_request_data_stream(msg);
         break;
 
-    case MAVLINK_MSG_ID_DATA96:                  //172
+    case MAVLINK_MSG_ID_DATA96:
         handle_data_packet(msg);
         break;        
 
-    case MAVLINK_MSG_ID_VISION_POSITION_DELTA:   //11011
+    case MAVLINK_MSG_ID_VISION_POSITION_DELTA:
         handle_vision_position_delta(msg);
         break;
 
-    case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE: //102
+    case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
         handle_vision_position_estimate(msg);
         break;
 
-    case MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE: //101
+    case MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
         handle_global_vision_position_estimate(msg);
         break;
 
-    case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:  //104
+    case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:
         handle_vicon_position_estimate(msg);
         break;
 
-    case MAVLINK_MSG_ID_ATT_POS_MOCAP:  //138
+    case MAVLINK_MSG_ID_ATT_POS_MOCAP:
         handle_att_pos_mocap(msg);
         break;
 
-    case MAVLINK_MSG_ID_SYSTEM_TIME:   //2
+    case MAVLINK_MSG_ID_SYSTEM_TIME:
         handle_system_time_message(msg);
         break;
     }
 
 }
 
-
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::handle_common_mission_message(mavlink_message_t *msg)
-*函数功能: 处理共同任务信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::handle_common_mission_message(mavlink_message_t *msg)
 {
     AP_Mission *_mission = get_mission();
@@ -2949,27 +2421,11 @@ void GCS_MAVLINK::handle_common_mission_message(mavlink_message_t *msg)
     }
 }
 
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::handle_send_autopilot_version(const mavlink_message_t *msg)
 {
     send_autopilot_version();
 }
 
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 void GCS_MAVLINK::send_banner()
 {
     // mark the firmware version in the tlog
@@ -2993,13 +2449,7 @@ void GCS_MAVLINK::send_banner()
     }
 }
 
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_simstate() const
-*函数功能：发送仿真状态
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_simstate() const
 {
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
@@ -3010,13 +2460,7 @@ void GCS_MAVLINK::send_simstate() const
     sitl->simstate_send(get_chan());
 #endif
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_flash_bootloader(const mavlink_command_long_t &packet)
 {
     if (uint32_t(packet.param5) != 290876) {
@@ -3031,13 +2475,6 @@ MAV_RESULT GCS_MAVLINK::handle_command_flash_bootloader(const mavlink_command_lo
     return MAV_RESULT_ACCEPTED;
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 MAV_RESULT GCS_MAVLINK::handle_command_preflight_set_sensor_offsets(const mavlink_command_long_t &packet)
 {
     Compass *compass = get_compass();
@@ -3059,13 +2496,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_preflight_set_sensor_offsets(const mavlin
     compass->set_and_save_offsets(compassNumber, packet.param2, packet.param3, packet.param4);
     return MAV_RESULT_ACCEPTED;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 bool GCS_MAVLINK::calibrate_gyros()
 {
     AP::ins().init_gyro();
@@ -3075,13 +2506,7 @@ bool GCS_MAVLINK::calibrate_gyros()
     AP::ahrs().reset_gyro_drift();
     return true;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::_handle_command_preflight_calibration_baro()
 {
     // fast barometer calibration
@@ -3096,13 +2521,7 @@ MAV_RESULT GCS_MAVLINK::_handle_command_preflight_calibration_baro()
 
     return MAV_RESULT_ACCEPTED;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::_handle_command_preflight_calibration(const mavlink_command_long_t &packet)
 {
     if (is_equal(packet.param1,1.0f)) {
@@ -3147,13 +2566,7 @@ MAV_RESULT GCS_MAVLINK::_handle_command_preflight_calibration(const mavlink_comm
 
     return MAV_RESULT_UNSUPPORTED;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_preflight_calibration(const mavlink_command_long_t &packet)
 {
     if (hal.util->get_soft_armed()) {
@@ -3163,13 +2576,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_preflight_calibration(const mavlink_comma
     // now call subclass methods:
     return _handle_command_preflight_calibration(packet);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_mag_cal(const mavlink_command_long_t &packet)
 {
     Compass *compass = get_compass();
@@ -3178,13 +2585,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_mag_cal(const mavlink_command_long_t &pac
     }
     return compass->handle_mag_cal_command(packet);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_request_autopilot_capabilities(const mavlink_command_long_t &packet)
 {
     if (!is_equal(packet.param1,1.0f)) {
@@ -3196,25 +2597,13 @@ MAV_RESULT GCS_MAVLINK::handle_command_request_autopilot_capabilities(const mavl
     return MAV_RESULT_ACCEPTED;
 }
 
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_do_send_banner(const mavlink_command_long_t &packet)
 {
     send_banner();
     return MAV_RESULT_ACCEPTED;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_do_set_mode(const mavlink_command_long_t &packet)
 {
     const MAV_MODE _base_mode = (MAV_MODE)packet.param1;
@@ -3222,13 +2611,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_do_set_mode(const mavlink_command_long_t 
 
     return _set_mode_common(_base_mode, _custom_mode);
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_get_home_position(const mavlink_command_long_t &packet)
 {
     if (!AP::ahrs().home_is_set()) {
@@ -3239,13 +2622,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_get_home_position(const mavlink_command_l
 
     return MAV_RESULT_ACCEPTED;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_do_gripper(mavlink_command_long_t &packet)
 {
     AP_Gripper *gripper = AP::gripper();
@@ -3277,13 +2654,7 @@ MAV_RESULT GCS_MAVLINK::handle_command_do_gripper(mavlink_command_long_t &packet
 
     return result;
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 MAV_RESULT GCS_MAVLINK::handle_command_long_message(mavlink_command_long_t &packet)
 {
     MAV_RESULT result = MAV_RESULT_FAILED;
@@ -3367,30 +2738,21 @@ MAV_RESULT GCS_MAVLINK::handle_command_long_message(mavlink_command_long_t &pack
 
     return result;
 }
-/**************************************************************************************************************
-*函数原型：bool GCS_MAVLINK::try_send_compass_message(const enum ap_message id)
-*函数功能：发送罗盘信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 
 bool GCS_MAVLINK::try_send_compass_message(const enum ap_message id)
 {
     Compass *compass = get_compass();
-    if (compass == nullptr)
-    {
+    if (compass == nullptr) {
         return true;
     }
     bool ret = true;
-    switch (id)
-    {
+    switch (id) {
     case MSG_MAG_CAL_PROGRESS:
-        compass->send_mag_cal_progress(chan); //发送校准进程
+        compass->send_mag_cal_progress(chan);
         ret = true;;
         break;
     case MSG_MAG_CAL_REPORT:
-        compass->send_mag_cal_report(chan); //发送罗盘校准报告
+        compass->send_mag_cal_report(chan);
         ret = true;
         break;
     default:
@@ -3399,35 +2761,27 @@ bool GCS_MAVLINK::try_send_compass_message(const enum ap_message id)
     }
     return ret;
 }
-/**************************************************************************************************************
-*函数原型：bool GCS_MAVLINK::try_send_mission_message(const enum ap_message id)
-*函数功能：发送任务消息信息
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 bool GCS_MAVLINK::try_send_mission_message(const enum ap_message id)
 {
     AP_Mission *mission = get_mission();
-    if (mission == nullptr)
-    {
+    if (mission == nullptr) {
         return true;
     }
 
     bool ret = true;
-    switch (id)  //当前航点信息
-    {
-    case MSG_CURRENT_WAYPOINT:                     //当前航点
+    switch (id) {
+    case MSG_CURRENT_WAYPOINT:
         CHECK_PAYLOAD_SIZE(MISSION_CURRENT);
         mavlink_msg_mission_current_send(chan, mission->get_current_nav_index());
         ret = true;
         break;
-    case MSG_MISSION_ITEM_REACHED:                 //已经达到的"任务"项目
+    case MSG_MISSION_ITEM_REACHED:
         CHECK_PAYLOAD_SIZE(MISSION_ITEM_REACHED);
         mavlink_msg_mission_item_reached_send(chan, mission_item_reached_index);
         ret = true;
         break;
-    case MSG_NEXT_WAYPOINT:                        //下一个航点
+    case MSG_NEXT_WAYPOINT:
         CHECK_PAYLOAD_SIZE(MISSION_REQUEST);
         queued_waypoint_send();
         ret = true;
@@ -3438,13 +2792,7 @@ bool GCS_MAVLINK::try_send_mission_message(const enum ap_message id)
     }
     return ret;
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_hwstatus()
-*函数功能：发送硬件电池电压
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_hwstatus()
 {
     mavlink_msg_hwstatus_send(
@@ -3452,68 +2800,36 @@ void GCS_MAVLINK::send_hwstatus()
         hal.analogin->board_voltage()*1000,
         0);
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_attitude() const
-*函数功能：发送姿态数据
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：通道,时间,横滚,俯仰,偏航,原始陀螺仪角速度x,原始陀螺仪角速度y,原始陀螺仪角速度z
-****************************************************************************************************************/
+
 void GCS_MAVLINK::send_attitude() const
 {
     const AP_AHRS &ahrs = AP::ahrs();
     const Vector3f omega = ahrs.get_gyro();
     mavlink_msg_attitude_send(
         chan,
-        AP_HAL::millis(),  //时间信息
-        ahrs.roll,         //横滚角
-        ahrs.pitch,        //俯仰角
-        ahrs.yaw,          //偏航角
-        omega.x,           //角速度x
-        omega.y,           //角速度y
-        omega.z);          //角速度z
-
+        AP_HAL::millis(),
+        ahrs.roll,
+        ahrs.pitch,
+        ahrs.yaw,
+        omega.x,
+        omega.y,
+        omega.z);
 }
 
-/**************************************************************************************************************
-*函数原型：int32_t GCS_MAVLINK::global_position_int_alt() const
-*函数功能：发送全局位置信息,主要是高度信息
-*修改日期：2019-2-25
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-int32_t GCS_MAVLINK::global_position_int_alt() const
-{
+int32_t GCS_MAVLINK::global_position_int_alt() const {
     return global_position_current_loc.alt * 10UL;
 }
-
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
-int32_t GCS_MAVLINK::global_position_int_relative_alt() const
-{
+int32_t GCS_MAVLINK::global_position_int_relative_alt() const {
     float posD;
     AP::ahrs().get_relative_position_D_home(posD);
     posD *= -1000.0f; // change from down to up and metres to millimeters
     return posD;
 }
-
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::send_global_position_int()
-*函数功能：发送全局位置,速度信息坐标
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：经纬度,垂直高度,相对高度,水平速度和垂直速度,机头方向
-****************************************************************************************************************/
 void GCS_MAVLINK::send_global_position_int()
 {
     AP_AHRS &ahrs = AP::ahrs();
 
-    ahrs.get_position(global_position_current_loc); //忽略返回值；我们发送过时数据----- return value ignored; we send stale data
+    ahrs.get_position(global_position_current_loc); // return value ignored; we send stale data
 
     Vector3f vel;
     ahrs.get_velocity_NED(vel);
@@ -3531,93 +2847,85 @@ void GCS_MAVLINK::send_global_position_int()
         ahrs.yaw_sensor);                // compass heading in 1/100 degree
 }
 
-/**************************************************************************************************************
-*函数原型：bool GCS_MAVLINK::try_send_message(const enum ap_message id)
-*函数功能：尝试发送信息
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
 bool GCS_MAVLINK::try_send_message(const enum ap_message id)
 {
-    if (telemetry_delayed())
-    {
+    if (telemetry_delayed()) {
         return false;
     }
 
     bool ret = true;
 
-    switch(id)
-    {
+    switch(id) {
 
-    case MSG_ATTITUDE:                       //发送姿态信息数据
+    case MSG_ATTITUDE:
         CHECK_PAYLOAD_SIZE(ATTITUDE);
-        send_attitude();                     //姿态数据
+        send_attitude();
         break;
 
-    case MSG_NEXT_PARAM:                     //发送下一个参数
+    case MSG_NEXT_PARAM:
         CHECK_PAYLOAD_SIZE(PARAM_VALUE);
         queued_param_send();
         ret = true;
         break;
 
-    case MSG_HEARTBEAT:                    //发送心跳包数据
+    case MSG_HEARTBEAT:
         CHECK_PAYLOAD_SIZE(HEARTBEAT);
         last_heartbeat_time = AP_HAL::millis();
         send_heartbeat();
         break;
 
-    case MSG_HWSTATUS:                    //发送硬件版本
+    case MSG_HWSTATUS:
         CHECK_PAYLOAD_SIZE(HWSTATUS);
-        send_hwstatus();                 //发送硬件电池电压
+        send_hwstatus();
         ret = true;
         break;
 
-    case MSG_LOCATION:                   //发送全局位置信息
+    case MSG_LOCATION:
         CHECK_PAYLOAD_SIZE(GLOBAL_POSITION_INT);
         send_global_position_int();
         break;
 
-    case MSG_CURRENT_WAYPOINT:           //发送当前航点
+    case MSG_CURRENT_WAYPOINT:
     case MSG_MISSION_ITEM_REACHED:
     case MSG_NEXT_WAYPOINT:
         ret = try_send_mission_message(id);
         break;
 
-    case MSG_MAG_CAL_PROGRESS:          //发送罗盘校准信息
+    case MSG_MAG_CAL_PROGRESS:
     case MSG_MAG_CAL_REPORT:
         ret = try_send_compass_message(id);
         break;
 
-    case MSG_BATTERY_STATUS:           //发送电池电压信息
+    case MSG_BATTERY_STATUS:
         send_battery_status();
         break;
 
-    case MSG_BATTERY2:                //发送电池电压2信息
+    case MSG_BATTERY2:
         CHECK_PAYLOAD_SIZE(BATTERY2);
         send_battery2();
         break;
 
-    case MSG_EKF_STATUS_REPORT:       //发送EKF信息
+    case MSG_EKF_STATUS_REPORT:
 #if AP_AHRS_NAVEKF_AVAILABLE
         CHECK_PAYLOAD_SIZE(EKF_STATUS_REPORT);
         AP::ahrs_navekf().send_ekf_status_report(chan);
 #endif
         break;
 
-    case MSG_EXTENDED_STATUS2:          //发送内存信息
+    case MSG_EXTENDED_STATUS2:
         CHECK_PAYLOAD_SIZE(MEMINFO);
         send_meminfo();
         ret = true;
         break;
-    case MSG_RANGEFINDER:               //发送测距仪信息
+
+    case MSG_RANGEFINDER:
         CHECK_PAYLOAD_SIZE(RANGEFINDER);
         send_rangefinder_downward();
         ret = send_distance_sensor();
         ret = ret && send_proximity();
         break;
 
-    case MSG_CAMERA_FEEDBACK:                         //发送相机信息
+    case MSG_CAMERA_FEEDBACK:
         {
             AP_Camera *camera = get_camera();
             if (camera == nullptr) {
@@ -3628,91 +2936,89 @@ bool GCS_MAVLINK::try_send_message(const enum ap_message id)
         }
         break;
 
-    case MSG_SYSTEM_TIME:                             //发送系统时间信息
+    case MSG_SYSTEM_TIME:
         CHECK_PAYLOAD_SIZE(SYSTEM_TIME);
         send_system_time();
         break;
     case MSG_GPS_RAW:
-        CHECK_PAYLOAD_SIZE(GPS_RAW_INT);              //发送原始GPS数据
+        CHECK_PAYLOAD_SIZE(GPS_RAW_INT);
         AP::gps().send_mavlink_gps_raw(chan);
         break;
     case MSG_GPS_RTK:
-        CHECK_PAYLOAD_SIZE(GPS_RTK);                  //发送原始GPS-RTK数据
+        CHECK_PAYLOAD_SIZE(GPS_RTK);
         AP::gps().send_mavlink_gps_rtk(chan, 0);
         break;
     case MSG_GPS2_RAW:
-        CHECK_PAYLOAD_SIZE(GPS2_RAW);                 //发送原始GPS2数据
+        CHECK_PAYLOAD_SIZE(GPS2_RAW);
         AP::gps().send_mavlink_gps2_raw(chan);
         break;
     case MSG_GPS2_RTK:
-        CHECK_PAYLOAD_SIZE(GPS2_RTK);                 //发送原始GPS-RTK2数据
+        CHECK_PAYLOAD_SIZE(GPS2_RTK);
         AP::gps().send_mavlink_gps_rtk(chan, 1);
         break;
 
-    case MSG_LOCAL_POSITION:                          //发送本地位置信息
+    case MSG_LOCAL_POSITION:
         CHECK_PAYLOAD_SIZE(LOCAL_POSITION_NED);
         send_local_position();
         break;
 
-    case MSG_POSITION_TARGET_GLOBAL_INT:              //发送位置目标全局初始化
+    case MSG_POSITION_TARGET_GLOBAL_INT:
         CHECK_PAYLOAD_SIZE(POSITION_TARGET_GLOBAL_INT);
         send_position_target_global_int();
         break;
 
-    case MSG_RADIO_IN:                                //发送遥控器数据
+    case MSG_RADIO_IN:
         CHECK_PAYLOAD_SIZE(RC_CHANNELS_RAW);
         send_radio_in();
         break;
 
-    case MSG_RAW_IMU1:                                //发送原始IMU数据
+    case MSG_RAW_IMU1:
         CHECK_PAYLOAD_SIZE(RAW_IMU);
         send_raw_imu();
         break;
 
-    case MSG_RAW_IMU2:                                //发送IMU2数据,主要是气压计
+    case MSG_RAW_IMU2:
         CHECK_PAYLOAD_SIZE(SCALED_PRESSURE);
         send_scaled_pressure();
         break;
 
-    case MSG_RAW_IMU3:                                //发送IMU3数据,误差信息
+    case MSG_RAW_IMU3:
         CHECK_PAYLOAD_SIZE(SENSOR_OFFSETS);
         send_sensor_offsets();
         break;
 
-    case MSG_SERVO_OUTPUT_RAW:                        //发送私服输出信息
+    case MSG_SERVO_OUTPUT_RAW:
         CHECK_PAYLOAD_SIZE(SERVO_OUTPUT_RAW);
         send_servo_output_raw();
         break;
 
-    case MSG_SIMSTATE:                                //发送仿真和ahrs2信息
+    case MSG_SIMSTATE:
         CHECK_PAYLOAD_SIZE(SIMSTATE);
         send_simstate();
         CHECK_PAYLOAD_SIZE(AHRS2);
         send_ahrs2();
         break;
 
-    case MSG_AHRS:                                   //发送ahrs信息
+    case MSG_AHRS:
         CHECK_PAYLOAD_SIZE(AHRS);
         send_ahrs();
         break;
 
-    case MSG_VFR_HUD:                               //爬升速度
+    case MSG_VFR_HUD:
         CHECK_PAYLOAD_SIZE(VFR_HUD);
         send_vfr_hud();
         break;
 
-    case MSG_VIBRATION:                             //发送震动信息
+    case MSG_VIBRATION:
         CHECK_PAYLOAD_SIZE(VIBRATION);
-       send_vibration();
+        send_vibration();
         break;
 
-    case MSG_ESC_TELEMETRY:
-    {
+    case MSG_ESC_TELEMETRY: {
 #ifdef HAVE_AP_BLHELI_SUPPORT
         CHECK_PAYLOAD_SIZE(ESC_TELEMETRY_1_TO_4);
         AP_BLHeli *blheli = AP_BLHeli::get_singleton();
-        if (blheli)
-        {
+        if (blheli) {
             blheli->send_esc_telemetry_mavlink(uint8_t(chan));
         }
 #endif
@@ -3735,24 +3041,15 @@ bool GCS_MAVLINK::try_send_message(const enum ap_message id)
 
     return ret;
 }
-/**************************************************************************************************************
-*函数原型：void GCS_MAVLINK::data_stream_send(void)
-*函数功能：串行数据流发送
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 void GCS_MAVLINK::data_stream_send(void)
 {
-//	hal.uartC->printf("******\r\n");
-    if (waypoint_receiving)
-    {
-        //不要干扰任务迁移--- don't interfere with mission transfer
+    if (waypoint_receiving) {
+        // don't interfere with mission transfer
         return;
     }
 
-    if (!hal.scheduler->in_delay_callback())
-    {
+    if (!hal.scheduler->in_delay_callback()) {
         // DataFlash_Class will not send log data if we are armed.
         DataFlash_Class::instance()->handle_log_send();
     }
@@ -3762,21 +3059,16 @@ void GCS_MAVLINK::data_stream_send(void)
     send_queued_parameters();
 
     if (gcs().out_of_time()) return;
-//    hal.uartC->printf("************\r\n");
-    if (hal.scheduler->in_delay_callback())
-    {
-//    	hal.uartC->printf("+++++++++\r\n");
-        if (in_hil_mode())
-        {
+
+    if (hal.scheduler->in_delay_callback()) {
+        if (in_hil_mode()) {
             // in HIL we need to keep sending servo values to ensure
             // the simulator doesn't pause, otherwise our sensor
             // calibration could stall
-            if (stream_trigger(STREAM_RAW_CONTROLLER))
-            {
+            if (stream_trigger(STREAM_RAW_CONTROLLER)) {
                 send_message(MSG_SERVO_OUT);
             }
-            if (stream_trigger(STREAM_RC_CHANNELS))
-            {
+            if (stream_trigger(STREAM_RC_CHANNELS)) {
                 send_message(MSG_SERVO_OUTPUT_RAW);
             }
         }
@@ -3784,38 +3076,23 @@ void GCS_MAVLINK::data_stream_send(void)
         // take way too long to run
         return;
     }
-//    hal.uartC->printf("------\r\n");
-    for (uint8_t i=0; all_stream_entries[i].ap_message_ids != nullptr; i++)
-    {
-        const streams id = (streams)all_stream_entries[i].stream_id;
 
-        if (!stream_trigger(id))
-        {
+    for (uint8_t i=0; all_stream_entries[i].ap_message_ids != nullptr; i++) {
+        const streams id = (streams)all_stream_entries[i].stream_id;
+        if (!stream_trigger(id)) {
             continue;
         }
-
         const ap_message *msg_ids = all_stream_entries[i].ap_message_ids;
-        for (uint8_t j=0; j<all_stream_entries[i].num_ap_message_ids; j++)
-        {
+        for (uint8_t j=0; j<all_stream_entries[i].num_ap_message_ids; j++) {
             const ap_message msg_id = msg_ids[j];
-//            hal.uartC->printf("msg_id=%d\r\n",msg_id);
-            send_message(msg_id);  //发送数据留
+            send_message(msg_id);
         }
-        if (gcs().out_of_time())
-        {
+        if (gcs().out_of_time()) {
             break;
         }
-
     }
-//    hal.uartC->printf("^^^^^^^\r\n");
 }
-/**************************************************************************************************************
-*函数原型：
-*函数功能：
-*修改日期：2019-2-21
-*修改作者：cihang_uav
-*备注信息：
-****************************************************************************************************************/
+
 /*
   correct an offboard timestamp in microseconds into a local timestamp
   since boot in milliseconds. This is a transport lag correction function, and works by assuming two key things:

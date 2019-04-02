@@ -28,10 +28,6 @@
 #if HAL_WITH_IO_MCU
 #include <AP_BoardConfig/AP_BoardConfig.h>
 #include <AP_IOMCU/AP_IOMCU.h>
-
-#define HAL_GPIO_NUM_GPIOA_7  84    //定义引脚PA7
-
-
 extern AP_IOMCU iomcu;
 #endif
 
@@ -135,16 +131,8 @@ void Util::set_imu_temp(float current)
     float output = constrain_float(kP * err + heater.integrator, 0, 100);
     
     // hal.console->printf("integrator %.1f out=%.1f temp=%.2f err=%.2f\n", heater.integrator, output, current, err);
-    if(output>0)
-    {
-       hal.gpio->write(HAL_GPIO_NUM_GPIOA_7, 1);  //PA7
-    }
-	else
-	{
-		hal.gpio->write(HAL_GPIO_NUM_GPIOA_7, 0);  //PA7
-	}
 
-//    iomcu.set_heater_duty_cycle(output);
+    iomcu.set_heater_duty_cycle(output);
 #endif // HAL_WITH_IO_MCU && HAL_HAVE_IMU_HEATER
 }
 

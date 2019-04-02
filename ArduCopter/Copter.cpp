@@ -33,10 +33,6 @@ Copter::Copter(void)
     land_accel_ef_filter(LAND_DETECTOR_ACCEL_LPF_CUTOFF),
     rc_throttle_control_in_filter(1.0f),
     inertial_nav(ahrs),
-    motor_spin_seq(0),
-    motor_spin_loop_count(0),
-    motor_num(0),
-	arm_gesture_release(true),
     param_loader(var_info),
     flightmode(&mode_stabilize)
 {

@@ -16,35 +16,25 @@ bool Copter::Mode::do_user_takeoff_start(float takeoff_alt_cm)
 // initiate user takeoff - called when MAVLink TAKEOFF command is received
 bool Copter::Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
 {
-//	hal.console->printf("%%%%%%\r\n");
-    if (!copter.motors->armed())
-    {
-//    	hal.console->printf("%%%%%%1111111111111\r\n");
+    if (!copter.motors->armed()) {
         return false;
     }
-    if (!ap.land_complete)
-    {
+    if (!ap.land_complete) {
         // can't takeoff again!
-//    	hal.console->printf("%%%%%%22222222222\r\n");
         return false;
     }
-    if (!has_user_takeoff(must_navigate))
-    {
+    if (!has_user_takeoff(must_navigate)) {
         // this mode doesn't support user takeoff
-//    	hal.console->printf("%%%%%%3333333333333\r\n");
         return false;
     }
-    if (takeoff_alt_cm <= copter.current_loc.alt)
-    {
+    if (takeoff_alt_cm <= copter.current_loc.alt) {
         // can't takeoff downwards...
-//    	hal.console->printf("%%%%%%44444444444\r\n");
         return false;
     }
 
 #if FRAME_CONFIG == HELI_FRAME
     // Helicopters should return false if MAVlink takeoff command is received while the rotor is not spinning
     if (!copter.motors->rotor_runup_complete()) {
-    	hal.console->printf("%%%%%%55555555\r\n");
         return false;
     }
 #endif
@@ -56,8 +46,6 @@ bool Copter::Mode::do_user_takeoff(float takeoff_alt_cm, bool must_navigate)
     copter.set_auto_armed(true);
     return true;
 }
-
-
 
 // start takeoff to specified altitude above home in centimeters
 void Copter::Mode::_TakeOff::start(float alt_cm)

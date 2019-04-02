@@ -404,8 +404,7 @@ void NavEKF2_core::detectFlight()
 // determine if a takeoff is expected so that we can compensate for expected barometer errors due to ground effect
 bool NavEKF2_core::getTakeoffExpected()
 {
-    if (expectGndEffectTakeoff && imuSampleTime_ms - takeoffExpectedSet_ms > frontend->gndEffectTimeout_ms)
-    {
+    if (expectGndEffectTakeoff && imuSampleTime_ms - takeoffExpectedSet_ms > frontend->gndEffectTimeout_ms) {
         expectGndEffectTakeoff = false;
     }
 
@@ -448,14 +447,7 @@ void NavEKF2_core::setTerrainHgtStable(bool val)
     terrainHgtStable = val;
 }
 
-/**************************************************************************************************************
-*函数原型：void NavEKF2_core::detectOptFlowTakeoff(void)
-*函数功能：起飞识别
-*修改日期：2019-2-19
-*修改作者：cihang_uav
-*备注信息：Detect takeoff for optical flow navigation
-****************************************************************************************************************/
-
+// Detect takeoff for optical flow navigation
 void NavEKF2_core::detectOptFlowTakeoff(void)
 {
     if (!onGround && !takeOffDetected && (imuSampleTime_ms - timeAtArming_ms) > 1000) {

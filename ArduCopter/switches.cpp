@@ -11,15 +11,8 @@ struct {
     uint8_t CH10_flag;  // ch10 aux switch : 0 is low or false, 1 is center or true, 2 is high
     uint8_t CH11_flag;  // ch11 aux switch : 0 is low or false, 1 is center or true, 2 is high
     uint8_t CH12_flag;  // ch12 aux switch : 0 is low or false, 1 is center or true, 2 is high
-    uint8_t CH7_multi_flag : 3; // 14, 15, 16 // ch7 multi aux switch : 0 is low or false, 1 is pump on, 2 is pump off, 3 is rtl on, 4 is rtl off, 5 is record B point, 6 is record B point
 } aux_con;
-/***********************************************************************************************************************
-*函数原型：bool Copter::ZigZag::init(bool ignore_checks)
-*函数功能：AB点函数初始化
-*修改日期：2018-9-10
-*修改作者：cihang_uav
-*备注信息：ZigZag_init - initialise stabilize controller
-*************************************************************************************************************************/
+
 void Copter::read_control_switch()
 {
     if (g.flight_mode_chan <= 0) {
@@ -89,89 +82,6 @@ void Copter::read_control_switch()
 
     control_switch_state.last_switch_position = switch_position;
 }
-/***********************************************************************************************************************
-*函数原型：void Copter::read_multiaux_switches()
-*函数功能：读取外部开关
-*修改日期：2018-12-26
-*修改作者：cihang_uav
-*备注信息：
-*************************************************************************************************************************/
-void Copter::read_multiaux_switches()
-{
-
-	// calculate position of aux switch
-	int8_t switch_position;
-	uint16_t rc7_in = RC_Channels::rc_channel(CH_7)->get_radio_in();
-	uint16_t rc6_in = RC_Channels::rc_channel(CH_6)->get_radio_in();
-    if      (rc7_in < 1131) switch_position = 0; // Initial, no input
-    else if (rc7_in < 1261) switch_position = 1; // Pump on
-    else if (rc7_in < 1391) switch_position = 2; // Pump off
-    else if (rc7_in < 1531) switch_position = 3; // RTL on
-    else if (rc7_in < 1661) switch_position = 4; // RTL off
-    else if (rc7_in < 1851) switch_position = 5; // Record B point
-    else switch_position = 6;  // Record A point
-
-    // store time that switch last moved
-    if (aux_con.CH7_multi_flag != switch_position)
-    {
-    	switch(switch_position)
-    	{
-    	case 0:
-    		break;
-    	case 1:
-    		break;
-    	case 2:
-    		break;
-    	case 3:
-    		set_mode(RTL, MODE_REASON_TX_COMMAND);
-    		break;
-    	case 4:
-            // return to loiter mode if we are currently in RTL
-            if (control_mode == RTL)
-            {
-                //reset_control_switch();
-            	control_switch_state.last_switch_position = control_switch_state.debounced_switch_position = -1;
-            	set_mode(LOITER, MODE_REASON_TX_COMMAND);
-            }
-    		break;
-    	case 5:
-        	// record B position
-        	if(control_mode != LOITER && control_mode != POSHOLD)
-        	{
-        		return;
-        	}
-        	if(mode_zigzag.zigzag_record_point(false))
-        	{
-        		gcs().send_text(MAV_SEVERITY_WARNING, "Record B point");
-        		AP_Notify::flags.zigzag_record = 81; // 3^4 = 81 means flash yellow 4 seconds
-        	}
-    		break;
-    	case 6:
-        	// record A position
-        	if(control_mode != LOITER && control_mode != POSHOLD)
-        	{
-        		return;
-        	}
-        	if(mode_zigzag.zigzag_record_point(true))
-        	{
-        		gcs().send_text(MAV_SEVERITY_WARNING, "Record A point");
-        		AP_Notify::flags.zigzag_record = 16; // 2^4 = 16 means flash blue 4 seconds
-        	}
-
-    		break;
-
-
-    	}
-    	aux_con.CH7_multi_flag = switch_position;
-        // control_switch_state.last_edge_time_ms = tnow_ms;
-    }
-
-    // exit immediately if the pump function has not been set-up for any servo
-    if (SRV_Channels::function_assigned(SRV_Channel::k_sprayer_pump) && (control_mode != ZIGZAG && control_mode != AUTO)) {
-    	SRV_Channels::set_output_pwm(SRV_Channel::k_sprayer_pump, rc6_in);
-    }
-}
-
 
 // check_if_auxsw_mode_used - Check to see if any of the Aux Switches are set to a given mode.
 bool Copter::check_if_auxsw_mode_used(uint8_t auxsw_mode_check)
@@ -247,27 +157,16 @@ void Copter::read_aux_switches()
     uint8_t switch_position;
 
     // exit immediately during radio failsafe
-    if (failsafe.radio || failsafe.radio_counter != 0)
-    {
+    if (failsafe.radio || failsafe.radio_counter != 0) {
         return;
     }
-    if(g.radio_type !=0)
-    {
 
-    	 read_multiaux_switches();
-
-    }
-    else
-    {
-        read_aux_switch(CH_7, aux_con.CH7_flag, g.ch7_option);
-        read_aux_switch(CH_8, aux_con.CH8_flag, g.ch8_option);
-        read_aux_switch(CH_9, aux_con.CH9_flag, g.ch9_option);
-        read_aux_switch(CH_10, aux_con.CH10_flag, g.ch10_option);
-        read_aux_switch(CH_11, aux_con.CH11_flag, g.ch11_option);
-        read_aux_switch(CH_12, aux_con.CH12_flag, g.ch12_option);
-
-    }
-
+    read_aux_switch(CH_7, aux_con.CH7_flag, g.ch7_option);
+    read_aux_switch(CH_8, aux_con.CH8_flag, g.ch8_option);
+    read_aux_switch(CH_9, aux_con.CH9_flag, g.ch9_option);
+    read_aux_switch(CH_10, aux_con.CH10_flag, g.ch10_option);
+    read_aux_switch(CH_11, aux_con.CH11_flag, g.ch11_option);
+    read_aux_switch(CH_12, aux_con.CH12_flag, g.ch12_option);
 }
 
 #undef read_aux_switch
@@ -874,69 +773,6 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             userhook_auxSwitch3(ch_flag);
             break;
 #endif
-        case AUXSW_ZIGZAG_POS_RECORD:
-     		   // record A position or B position
-     		   switch (ch_flag)
-     		   {
-     		      case AUX_SWITCH_HIGH:
-     					// record A position
-     					if(control_mode != LOITER && control_mode != POSHOLD)
-     					{
-     						return;
-     					}
-     					if(copter.mode_zigzag.zigzag_record_point(true))
-     					{
-     						gcs().send_text(MAV_SEVERITY_WARNING, "Record A point");
-     						AP_Notify::flags.zigzag_record = 16; // 2^4 = 16 means flash blue 4 seconds
-     					}
-     					   //init_arm_motors(false);
-     					   break;
-     			  case AUX_SWITCH_LOW:
-     					// record B position
-     					if(control_mode != LOITER && control_mode != POSHOLD)
-     					{
-     						return;
-     					}
-     					if(copter.mode_zigzag.zigzag_record_point(false))
-     					{
-     						gcs().send_text(MAV_SEVERITY_WARNING, "Record B point");
-     						AP_Notify::flags.zigzag_record = 81; // 3^4 = 81 means flash yellow 4 seconds
-     					}
-     					  break;
-     		   }
-     		   break;
-                // add by weihli
-     	    case AUXSW_USHAPE_POS_RECORD:
-     		   // record A position or B position
-     		   switch (ch_flag)
-     		   {
-     		      case AUX_SWITCH_HIGH:
-     					// record A position
-     					if(control_mode != LOITER && control_mode != POSHOLD)
-     					{
-     						return;
-     					}
-     					if(copter.mode_ushape.ushape_record_point(true))
-     					{
-     						gcs().send_text(MAV_SEVERITY_WARNING, "U Record A point");
-     						AP_Notify::flags.ushape_record = 16; // 2^4 = 16 means flash blue 4 seconds
-     					}
-     					   //init_arm_motors(false);
-     					   break;
-     			  case AUX_SWITCH_LOW:
-     					// record B position
-     					if(control_mode != LOITER && control_mode != POSHOLD)
-     					{
-     						return;
-     					}
-     					if(copter.mode_ushape.ushape_record_point(false))
-     					{
-     						gcs().send_text(MAV_SEVERITY_WARNING, "U Record B point");
-     						AP_Notify::flags.ushape_record = 81; // 3^4 = 81 means flash yellow 4 seconds
-     					}
-     					  break;
-     		   }
-     		   break;
     }
 }
 

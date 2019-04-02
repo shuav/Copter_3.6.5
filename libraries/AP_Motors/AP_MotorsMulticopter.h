@@ -99,30 +99,7 @@ public:
     void                set_thrust_compensation_callback(thrust_compensation_fn_t callback) {
         _thrust_compensation_callback = callback;
     }
-    // 使能电机----测试电机解锁时按顺序转动
-    void    set_motor_enabled(int8_t motor_num, bool value)
-    {
-    	if(motor_enabled[motor_num] != value)
-    	{
-    		motor_enabled[motor_num] = value;
-    	}
-    }
-    void               set_motor_enabled(uint8_t mask)
-    {
-        for (uint8_t i=0; i<AP_MOTORS_MAX_NUM_MOTORS; i++) {
-            //if (motor_enabled[i]) {
-                //int16_t motor_out;
-                if (mask & (1U<<i)) {
-                	set_motor_enabled(i, true);
-                    //motor_out = calc_thrust_to_pwm(thrust);
-                } else {
-                	set_motor_enabled(i, false);
-                    //motor_out = get_pwm_output_min();
-                }
-                //rc_write(i, motor_out);
-            }
-        //}
-    }
+    
     // var_info for holding Parameter information
     static const struct AP_Param::GroupInfo        var_info[];
 
